@@ -1,3 +1,21 @@
+# Grafana Event Bridge Emitter App Plugin
+
+Emit configured event to event bridge.
+
+## Refferences
+
+- [grafana/grafana-aws-sdk-react](https://github.com/grafana/grafana-aws-sdk-react)
+- [grafana/grafana-aws-sdk](https://github.com/grafana/grafana-aws-sdk)
+
+| プラグイン | リポジトリ |
+| --- | --- |
+| CloudWatch | [grafana/grafana-cloudwatch-datasource](https://github.com/grafana/grafana-cloudwatch-datasource) |
+| Amazon Athena | [grafana/athena-datasource](https://github.com/grafana/athena-datasource) |
+| Amazon Timestream | [grafana/timestream-datasource](https://github.com/grafana/timestream-datasource) |
+| AWS X-Ray | [grafana/x-ray-datasource](https://github.com/grafana/x-ray-datasource) |
+
+---
+
 # Grafana app plugin template
 
 This template is a starting point for building an app plugin for Grafana.
@@ -11,63 +29,49 @@ App plugins can let you create a custom out-of-the-box monitoring experience by 
 ### Backend
 
 1. Update [Grafana plugin SDK for Go](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/grafana-plugin-sdk-for-go) dependency to the latest minor version:
-
-   ```bash
+  ```bash
    go get -u github.com/grafana/grafana-plugin-sdk-go
    go mod tidy
-   ```
-
+  ```
 2. Build plugin backend binaries for Linux, Windows and Darwin:
-
-   ```bash
+  ```bash
    mage -v
-   ```
-
+  ```
 3. List all available Mage targets for additional commands:
-
-   ```bash
+  ```bash
    mage -l
-   ```
+  ```
+
+
 
 ### Frontend
 
 1. Install dependencies
-
-   ```bash
+  ```bash
    npm install
-   ```
-
+  ```
 2. Build plugin in development mode and run in watch mode
-
-   ```bash
+  ```bash
    npm run dev
-   ```
-
+  ```
 3. Build plugin in production mode
-
-   ```bash
+  ```bash
    npm run build
-   ```
-
+  ```
 4. Run the tests (using Jest)
-
-   ```bash
+  ```bash
    # Runs the tests and watches for changes, requires git init first
    npm run test
 
    # Exits after running all the tests
    npm run test:ci
-   ```
-
+  ```
 5. Spin up a Grafana instance and run the plugin inside it (using Docker)
-
-   ```bash
+  ```bash
    npm run server
-   ```
-
+  ```
 6. Run the E2E tests (using Playwright)
-
-   ```bash
+  ```bash
    # Spins up a Grafana instance first that we tests against
    npm run server
 
@@ -76,23 +80,23 @@ App plugins can let you create a custom out-of-the-box monitoring experience by 
 
    # Starts the tests
    npm run e2e
-   ```
-
+  ```
 7. Run the linter
-
-   ```bash
+  ```bash
    npm run lint
 
    # or
 
    npm run lint:fix
-   ```
+  ```
+
+
 
 # Distributing your plugin
 
 When distributing a Grafana plugin either within the community or privately the plugin must be signed so the Grafana application can verify its authenticity. This can be done with the `@grafana/sign-plugin` package.
 
-_Note: It's not necessary to sign a plugin during development. The docker development environment that is scaffolded with `@grafana/create-plugin` caters for running the plugin without a signature._
+*Note: It's not necessary to sign a plugin during development. The docker development environment that is scaffolded with* `@grafana/create-plugin` *caters for running the plugin without a signature.*
 
 ## Initial steps
 
@@ -104,7 +108,7 @@ Before signing a plugin for the first time please consult the Grafana [plugin si
 
 1. Create a [Grafana Cloud account](https://grafana.com/signup).
 2. Make sure that the first part of the plugin ID matches the slug of your Grafana Cloud account.
-   - _You can find the plugin ID in the `plugin.json` file inside your plugin directory. For example, if your account slug is `acmecorp`, you need to prefix the plugin ID with `acmecorp-`._
+  - *You can find the plugin ID in the* `plugin.json` *file inside your plugin directory. For example, if your account slug is* `acmecorp`*, you need to prefix the plugin ID with* `acmecorp-`*.*
 3. Create a Grafana Cloud API key with the `PluginPublisher` role.
 4. Keep a record of this API key as it will be required for signing a plugin
 
@@ -120,6 +124,8 @@ If the plugin is using the github actions supplied with `@grafana/create-plugin`
 4. Paste your Grafana Cloud API key in the Secret field
 5. Click "Add secret"
 
+
+
 #### Push a version tag
 
 To trigger the workflow we need to push a version tag to github. This can be achieved with the following steps:
@@ -127,10 +133,13 @@ To trigger the workflow we need to push a version tag to github. This can be ach
 1. Run `npm version <major|minor|patch>`
 2. Run `git push origin main --follow-tags`
 
+
+
 ## Learn more
 
 Below you can find source code for existing app plugins and other related documentation.
 
 - [Basic app plugin example](https://github.com/grafana/grafana-plugin-examples/tree/master/examples/app-basic#readme)
-- [`plugin.json` documentation](https://grafana.com/developers/plugin-tools/reference/plugin-json)
+- `plugin.json` [documentation](https://grafana.com/developers/plugin-tools/reference/plugin-json)
 - [Sign a plugin](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin)
+
