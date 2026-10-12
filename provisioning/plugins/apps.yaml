@@ -6,6 +6,5 @@ apps:
     org_name: 'toshi-lab'
     disabled: false
     jsonData:
-      apiUrl: http://default-url.com
-    secureJsonData:
-      apiKey: secret-key
+      authType: default
+      defaultRegion: ap-northeast-1
