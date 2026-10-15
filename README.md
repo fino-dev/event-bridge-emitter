@@ -16,7 +16,6 @@ Grafana app plugin for configuring and verifying AWS authentication used by an E
 
 The `Workspace IAM Role` option is intentionally not offered. The current backend treats it the same as AWS SDK Default and does not force EC2 metadata credentials; use AWS SDK Default for the standard AWS credential chain.
 
-
 ## AWS authentication
 
 Open the plugin's **Configuration** page to select an authentication provider, set a default AWS region, and optionally configure an IAM role to assume. The plugin checks the saved credentials with AWS STS and displays the authenticated account and ARN.
