@@ -6,8 +6,7 @@ function HomePage() {
   return (
     <PluginPage>
       <div data-testid={testIds.homePage.container}>
-        <h1>AWS EventBridge Emitter</h1>
-        <p>Configure and verify AWS authentication on the Configuration page.</p>
+        hoge
       </div>
     </PluginPage>
   );

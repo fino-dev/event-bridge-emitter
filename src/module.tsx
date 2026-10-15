@@ -18,4 +18,4 @@ export const plugin = new AppPlugin<AwsAuthJsonData>().setRootPage(App).addConfi
   icon: 'cog',
   body: AppConfig,
   id: 'configuration',
-}).addComponent;
+});

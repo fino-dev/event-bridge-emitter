@@ -15,13 +15,13 @@ export interface AwsIdentity {
   userId: string;
 }
 
-export interface AwsAuthProviderOption {
+interface AwsAuthProviderOption {
   value: AwsAuthType;
   label: string;
   description: string;
 }
 
-export const awsAuthProviders: AwsAuthProviderOption[] = [
+const awsAuthProviders: AwsAuthProviderOption[] = [
   {
     value: 'ec2_iam_role',
     label: 'Workspace IAM Role',
@@ -56,7 +56,7 @@ export function visibleAuthProviders(allowed: string[] | undefined): AwsAuthProv
   return awsAuthProviders.filter((provider) => allowed.includes(provider.value));
 }
 
-export interface AwsAuthFormState {
+interface AwsAuthFormState {
   authType: AwsAuthType;
   profile: string;
   defaultRegion: string;
