@@ -17,6 +17,7 @@ describe('visibleAuthProviders', () => {
   test('does not expose the redundant workspace IAM role provider', () => {
     expect(visibleAuthProviders(['ec2_iam_role'])).toEqual([]);
   });
+});
 
 describe('buildAwsSettingsUpdate', () => {
   const base = {
