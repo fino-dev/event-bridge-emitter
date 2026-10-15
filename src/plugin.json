@@ -9,11 +9,11 @@
     "keywords": ["app"],
     "description": "",
     "author": {
-      "name": "Toshi lab"
+      "name": "Toshi Lab"
     },
     "logos": {
-      "small": "img/event-bridge-emitter.svg",
-      "large": "img/event-bridge-emitter.svg"
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
     },
     "screenshots": [],
     "version": "%VERSION%",

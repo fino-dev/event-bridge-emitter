@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { AppPlugin } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
+import type { AwsAuthJsonData } from './aws/settings';
 import type { AppConfigProps } from './components/AppConfig/AppConfig';
 
 const App = lazy(() => import('./components/App/App'));
@@ -12,9 +13,9 @@ const AppConfig = (props: AppConfigProps) => (
   </Suspense>
 );
 
-export const plugin = new AppPlugin<{}>().setRootPage(App).addConfigPage({
+export const plugin = new AppPlugin<AwsAuthJsonData>().setRootPage(App).addConfigPage({
   title: 'Configuration',
   icon: 'cog',
   body: AppConfig,
   id: 'configuration',
-});
+}).addComponent;
