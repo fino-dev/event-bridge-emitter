@@ -12,6 +12,9 @@ describe('Components/AppConfig', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
+      return { measureText: () => ({ width: 0 }) } as unknown as CanvasRenderingContext2D;
+    });
     config.awsAllowedAuthProviders = ['default', 'keys', 'credentials'];
     config.awsAssumeRoleEnabled = true;
 
@@ -30,6 +33,7 @@ describe('Components/AppConfig', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     config.awsAllowedAuthProviders = originalProviders;
     config.awsAssumeRoleEnabled = originalAssumeRole;
   });
