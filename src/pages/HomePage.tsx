@@ -6,7 +6,7 @@ function HomePage() {
   return (
     <PluginPage>
       <div data-testid={testIds.homePage.container}>
-        hoge
+        <h1>AWS EventBridge Emitter</h1>
       </div>
     </PluginPage>
   );
