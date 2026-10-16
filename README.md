@@ -14,7 +14,20 @@ Install frontend dependencies and start the development build:
 
 ```bash
 npm install
+npm run setup:hooks
 npm run dev
+```
+
+The `pre-push` hook runs the same frontend checks as CI, followed by the Go
+backend lint, build, and test checks. A failed check blocks the push. The hook
+requires `mage` and `golangci-lint` to be available in `PATH` when the project
+has a backend. If dependencies are already installed, enable the hook with
+`npm run setup:hooks`.
+
+Run the checks manually with:
+
+```bash
+npm run ci
 ```
 
 Run the frontend unit tests and type check:

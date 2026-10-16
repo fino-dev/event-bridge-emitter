@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -eu
+
+ROOT_DIR=$(git rev-parse --show-toplevel)
+cd "$ROOT_DIR"
+
+echo "Running CI checks before push..."
+exec npm run ci
