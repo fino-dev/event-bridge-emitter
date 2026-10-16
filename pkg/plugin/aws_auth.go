@@ -103,26 +103,7 @@ func parseAuthType(value string) (awsauth.AuthType, error) {
 }
 
 func (a *App) callerIdentity(ctx context.Context, instance *backend.AppInstanceSettings) (CallerIdentity, error) {
-	if instance == nil {
-		return CallerIdentity{}, invalidAuth(errors.New("AWS settings are not available"))
-	}
-
-	settings, err := awsAuthSettings(*instance)
-	if err != nil {
-		return CallerIdentity{}, err
-	}
-
-	httpOptions, err := instance.HTTPClientOptions(ctx)
-	if err != nil {
-		return CallerIdentity{}, invalidAuth(fmt.Errorf("could not read HTTP settings: %w", err))
-	}
-	httpClient, err := httpclient.NewProvider().New(httpOptions)
-	if err != nil {
-		return CallerIdentity{}, fmt.Errorf("could not create HTTP client: %w", err)
-	}
-	settings.HTTPClient = httpClient
-
-	cfg, err := a.awsConfigs.GetConfig(ctx, settings)
+	cfg, err := a.awsConfig(ctx, instance)
 	if err != nil {
 		return CallerIdentity{}, err
 	}
@@ -140,6 +121,33 @@ func (a *App) callerIdentity(ctx context.Context, instance *backend.AppInstanceS
 		ARN:     aws.ToString(output.Arn),
 		UserID:  aws.ToString(output.UserId),
 	}, nil
+}
+
+func (a *App) awsConfig(ctx context.Context, instance *backend.AppInstanceSettings) (aws.Config, error) {
+	if instance == nil {
+		return aws.Config{}, invalidAuth(errors.New("AWS settings are not available"))
+	}
+
+	settings, err := awsAuthSettings(*instance)
+	if err != nil {
+		return aws.Config{}, err
+	}
+
+	httpOptions, err := instance.HTTPClientOptions(ctx)
+	if err != nil {
+		return aws.Config{}, invalidAuth(fmt.Errorf("could not read HTTP settings: %w", err))
+	}
+	httpClient, err := httpclient.NewProvider().New(httpOptions)
+	if err != nil {
+		return aws.Config{}, fmt.Errorf("could not create HTTP client: %w", err)
+	}
+	settings.HTTPClient = httpClient
+
+	cfg, err := a.awsConfigs.GetConfig(ctx, settings)
+	if err != nil {
+		return aws.Config{}, err
+	}
+	return cfg, nil
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {

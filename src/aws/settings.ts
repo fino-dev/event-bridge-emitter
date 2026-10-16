@@ -4,6 +4,8 @@ export interface AwsAuthJsonData {
   authType?: AwsAuthType;
   profile?: string;
   defaultRegion?: string;
+  templateTableName?: string;
+  templateTableRegion?: string;
   assumeRoleArn?: string;
   externalId?: string;
   [key: string]: string | undefined;
@@ -57,6 +59,8 @@ interface AwsAuthFormState {
   defaultRegion: string;
   assumeRoleArn: string;
   externalId: string;
+  templateTableName: string;
+  templateTableRegion: string;
   accessKey: string;
   secretKey: string;
   isAccessKeySet: boolean;
@@ -73,6 +77,8 @@ export function buildAwsSettingsUpdate(state: AwsAuthFormState): {
     defaultRegion: state.defaultRegion.trim(),
     assumeRoleArn: state.assumeRoleEnabled ? state.assumeRoleArn.trim() : '',
     externalId: state.assumeRoleEnabled ? state.externalId.trim() : '',
+    templateTableName: state.templateTableName.trim(),
+    templateTableRegion: state.templateTableRegion.trim(),
   };
   if (state.authType === 'credentials') {
     jsonData.profile = state.profile.trim();

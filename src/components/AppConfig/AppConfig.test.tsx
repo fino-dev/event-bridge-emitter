@@ -44,6 +44,8 @@ describe('Components/AppConfig', () => {
     expect(screen.queryByRole('group', { name: /aws authentication/i })).toBeInTheDocument();
     expect(screen.queryByLabelText(/authentication provider/i)).toBeInTheDocument();
     expect(screen.queryByTestId(testIds.appConfig.defaultRegion)).toHaveValue('ap-northeast-1');
+    expect(screen.queryByTestId(testIds.appConfig.templateTableName)).toBeInTheDocument();
+    expect(screen.queryByTestId(testIds.appConfig.templateTableRegion)).toBeInTheDocument();
     expect(screen.queryByTestId(testIds.appConfig.assumeRoleArn)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save and test/i })).toBeInTheDocument();
   });

@@ -25,6 +25,8 @@ describe('buildAwsSettingsUpdate', () => {
     defaultRegion: ' ap-northeast-1 ',
     assumeRoleArn: ' arn:aws:iam::123456789012:role/Grafana ',
     externalId: ' external ',
+    templateTableName: ' eventbridge-emitter-templates ',
+    templateTableRegion: ' ap-northeast-1 ',
     accessKey: '',
     secretKey: '',
     isAccessKeySet: false,
@@ -40,6 +42,8 @@ describe('buildAwsSettingsUpdate', () => {
         defaultRegion: 'ap-northeast-1',
         assumeRoleArn: 'arn:aws:iam::123456789012:role/Grafana',
         externalId: 'external',
+        templateTableName: 'eventbridge-emitter-templates',
+        templateTableRegion: 'ap-northeast-1',
       },
       secureJsonData: undefined,
     });
@@ -60,6 +64,8 @@ describe('buildAwsSettingsUpdate', () => {
         defaultRegion: 'ap-northeast-1',
         assumeRoleArn: 'arn:aws:iam::123456789012:role/Grafana',
         externalId: 'external',
+        templateTableName: 'eventbridge-emitter-templates',
+        templateTableRegion: 'ap-northeast-1',
       },
       secureJsonData: { accessKey: 'AKIA' },
     });

@@ -1,6 +1,6 @@
 # AWS EventBridge Emitter
 
-Grafana app plugin for configuring and verifying AWS authentication used by an EventBridge integration. Event publishing is not implemented yet.
+Grafana app plugin for managing reusable Amazon EventBridge event templates and sending them through the Grafana backend.
 
 ## 🎭 AWS Authentication
 
@@ -16,7 +16,37 @@ The Grafana service must be able to reach AWS STS and the configured AWS Region.
 
 Choose the method that matches how the Grafana service obtains AWS credentials.
 
-| Use case | Authentication method |
+## EventBridge templates
+
+The home page provides template CRUD, JSON import/export, generated input forms, an EventBridge JSON preview, and one-event execution. The browser never receives AWS credentials or calls AWS directly. A successful execution means EventBridge accepted the event; it does not mean downstream Lambda or pipeline processing has completed.
+
+Templates are persisted in DynamoDB and isolated by Grafana organization. Configure the table name and optional table region in the plugin Configuration page. Create the table with a string partition key named `orgId` and a string sort key named `id`. The plugin stores template data as regular DynamoDB attributes and uses the template `version` for optimistic locking.
+
+The Grafana identity also needs the following least-privilege permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["events:PutEvents"],
+      "Resource": "arn:aws:events:<region>:<account-id>:event-bus/<event-bus-name>"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:DeleteItem"],
+      "Resource": "arn:aws:dynamodb:<region>:<account-id>:table/<template-table-name>"
+    }
+  ]
+}
+```
+
+Viewer users can view templates. Editor and Admin users can create, update, duplicate, delete, and execute them. These permissions are enforced by the backend resource API as well as by the UI.
+
+### Usecases
+
+| Usecases | Authentication methods |
 | --- | --- |
 | Grafana runs with an EC2, ECS, or EKS workload role, or another standard AWS SDK credential source | AWS SDK Default |
 | Grafana must select a named profile from files available on the server | Credentials file |

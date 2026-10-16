@@ -7,6 +7,7 @@ import { AssumeRoleFields } from './fields/AssumeRoleFields';
 import { AuthCredentialFields } from './fields/AuthCredentialFields';
 import { AuthenticationProviderField } from './fields/AuthenticationProviderField';
 import { DefaultRegionField } from './fields/DefaultRegionField';
+import { TemplateStorageFields } from './fields/TemplateStorageFields';
 import { useAwsAuthSettings } from './useAwsAuthSettings';
 
 type AwsAuthFormProps = ReturnType<typeof useAwsAuthSettings>;
@@ -50,6 +51,13 @@ export function AwsAuthForm({
           <AssumeRoleFields assumeRoleArn={state.assumeRoleArn} externalId={state.externalId} onChange={onChange} />
         )}
         <DefaultRegionField className={styles.marginTop} value={state.defaultRegion} onChange={onChange} />
+        <FieldSet label="Template storage">
+          <TemplateStorageFields
+            tableName={state.templateTableName}
+            region={state.templateTableRegion}
+            onChange={onChange}
+          />
+        </FieldSet>
         {result && (
           <Alert severity={result.severity} title={result.title} data-testid={testIds.appConfig.result}>
             {result.message}

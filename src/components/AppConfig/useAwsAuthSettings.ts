@@ -21,6 +21,8 @@ export interface AuthFormState {
   defaultRegion: string;
   assumeRoleArn: string;
   externalId: string;
+  templateTableName: string;
+  templateTableRegion: string;
   accessKey: string;
   secretKey: string;
   isAccessKeySet: boolean;
@@ -45,6 +47,8 @@ export function useAwsAuthSettings(meta: AppPluginMeta<AwsAuthJsonData>) {
     defaultRegion: jsonData?.defaultRegion || '',
     assumeRoleArn: jsonData?.assumeRoleArn || '',
     externalId: jsonData?.externalId || '',
+    templateTableName: jsonData?.templateTableName || '',
+    templateTableRegion: jsonData?.templateTableRegion || '',
     accessKey: '',
     secretKey: '',
     isAccessKeySet: Boolean(secureJsonFields?.accessKey),
