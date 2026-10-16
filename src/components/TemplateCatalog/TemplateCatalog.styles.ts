@@ -29,12 +29,16 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   searchBar: css({
     display: 'flex',
     alignItems: 'flex-end',
+    flexWrap: 'nowrap',
     gap: theme.spacing(1),
-    padding: theme.spacing(2),
-    marginBottom: theme.spacing(3),
+    padding: theme.spacing(1.5),
+    marginBottom: theme.spacing(2),
     background: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
+    '& > button': {
+      flexShrink: 0,
+    },
   }),
   searchInput: css({
     flex: 1,

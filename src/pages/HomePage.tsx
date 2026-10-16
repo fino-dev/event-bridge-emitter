@@ -1,5 +1,5 @@
 import { config, PluginPage } from '@grafana/runtime';
-import { Alert, Badge, Icon, useStyles2 } from '@grafana/ui';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import pluginJson from '../plugin.json';
 import { TemplateCatalog } from '../components/TemplateCatalog/TemplateCatalog';
@@ -38,27 +38,22 @@ function HomePage() {
   return (
     <PluginPage>
       <main className={styles.page} data-testid={testIds.homePage.container}>
-        <header className={styles.pageHeader}>
-          <div className={styles.pageTitleGroup}>
-            <div className={styles.eyebrow}>
-              <Icon name="cloud" size="sm" />
-              Event delivery
-            </div>
-            <h1 className={styles.pageTitle}>AWS EventBridge Emitter</h1>
-            <p className={styles.pageSubtitle}>
-              Choose a provisioned template, fill in its event values, and send an event through Grafana.
-            </p>
-          </div>
-          <Badge color="blue" icon="code-branch" text="Provisioned templates" />
-        </header>
-
         {error && (
-          <Alert severity="error" title="Template request failed" onRemove={() => setError(undefined)}>
+          <Alert
+            severity="error"
+            title="Template request failed"
+            bottomSpacing={2}
+            action={
+              <Button size="sm" variant="secondary" onClick={() => void loadTemplates(query)}>
+                Retry
+              </Button>
+            }
+          >
             {error}
           </Alert>
         )}
 
-        {!executing && (
+        {!executing && !error && (
           <TemplateCatalog
             templates={templates}
             query={query}
