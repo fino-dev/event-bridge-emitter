@@ -9,6 +9,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache .",
     "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
+    "ci:frontend": "npm run typecheck && npm run lint && npm run test:ci && npm run build",
+    "ci": "sh ./scripts/run-ci.sh",
+    "setup:hooks": "sh ./scripts/setup-git-hooks.sh",
     "e2e": "playwright test",
     "server": "docker compose up --build",
     "sign": "sign-plugin"
