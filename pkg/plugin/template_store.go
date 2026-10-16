@@ -18,7 +18,7 @@ func (a *App) templateRepository(_ context.Context, instance *backend.AppInstanc
 		return a.templates, nil
 	}
 	if instance == nil {
-		return nil, errors.New("Grafana app settings are not available")
+		return nil, errors.New("grafana app settings are unavailable")
 	}
 
 	settings, err := readTemplateProvisioningSettings(*instance)
