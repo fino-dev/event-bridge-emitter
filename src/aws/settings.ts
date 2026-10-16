@@ -1,4 +1,4 @@
-export type AwsAuthType = 'default' | 'credentials' | 'keys' | 'ec2_iam_role';
+export type AwsAuthType = 'default' | 'credentials' | 'keys';
 
 export interface AwsAuthJsonData {
   authType?: AwsAuthType;
@@ -22,11 +22,6 @@ interface AwsAuthProviderOption {
 }
 
 const awsAuthProviders: AwsAuthProviderOption[] = [
-  {
-    value: 'ec2_iam_role',
-    label: 'Workspace IAM Role',
-    description: 'Use the IAM role attached to the machine running Grafana.',
-  },
   {
     value: 'default',
     label: 'AWS SDK Default',

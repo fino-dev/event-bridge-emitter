@@ -96,7 +96,7 @@ func parseAuthType(value string) (awsauth.AuthType, error) {
 	case awsauth.AuthTypeEC2IAMRole:
 		return awsauth.AuthTypeEC2IAMRole, nil
 	case awsauth.AuthTypeGrafanaAssumeRole:
-		return "", errors.New("Grafana Assume Role is not supported by this plugin")
+		return "", errors.New("grafana assume role is not supported by this plugin")
 	default:
 		return "", fmt.Errorf("unsupported authentication provider %q", value)
 	}
