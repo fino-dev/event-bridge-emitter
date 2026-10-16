@@ -1,6 +1,6 @@
 # AWS EventBridge Emitter
 
-Grafana app plugin for configuring and verifying AWS authentication used by an EventBridge integration. Event publishing is not implemented yet.
+Grafana app plugin for executing provisioned Amazon EventBridge event templates through the Grafana backend.
 
 ## 🎭 AWS Authentication
 
@@ -16,12 +16,37 @@ The Grafana service must be able to reach AWS STS and the configured AWS Region.
 
 Choose the method that matches how the Grafana service obtains AWS credentials.
 
-| Use case | Authentication method |
-| --- | --- |
-| Grafana runs with an EC2, ECS, or EKS workload role, or another standard AWS SDK credential source | AWS SDK Default |
-| Grafana must select a named profile from files available on the server | Credentials file |
-| Grafana receives a dedicated access key pair from a secret-management process | Access & secret key |
-| Optional: The selected identity must access a role in another account or a restricted target role | Configure Assume Role in addition to one of the methods above |
+## EventBridge templates
+
+The home page lists templates loaded from Grafana app provisioning. Operators select a template, change its `detailType` when needed, enter the typed dynamic fields defined by that template, review the generated event detail, and execute one event. Template metadata, destinations, fixed detail, and field definitions are not editable in the home page; update them by changing the provisioning JSON and redeploying or reloading Grafana. The browser never receives AWS credentials or calls AWS directly. A successful execution means EventBridge accepted the event; it does not mean downstream Lambda or pipeline processing has completed.
+
+Add templates to the app's `jsonData.templates` provisioning property. The local example is in [`provisioning/plugins/development-apps.yaml`](provisioning/plugins/development-apps.yaml). Each template defines its EventBridge destination, source, default detail type, fixed detail, and dynamic fields with types such as `string`, `number`, `boolean`, `select`, or `json`. The plugin validates the definitions when the Grafana app instance is initialized and rejects duplicate IDs or invalid field definitions.
+
+The Grafana identity also needs the following least-privilege permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["events:PutEvents"],
+      "Resource": "arn:aws:events:<region>:<account-id>:event-bus/<event-bus-name>"
+    }
+  ]
+}
+```
+
+Viewer users can view templates. Editor and Admin users can execute them. Template definitions are controlled by Grafana provisioning and cannot be created, updated, duplicated, imported, or deleted through the resource API. These permissions are enforced by the backend resource API as well as by the UI.
+
+### Usecases
+
+| Usecases                                                                                           | Authentication methods                                        |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Grafana runs with an EC2, ECS, or EKS workload role, or another standard AWS SDK credential source | AWS SDK Default                                               |
+| Grafana must select a named profile from files available on the server                             | Credentials file                                              |
+| Grafana receives a dedicated access key pair from a secret-management process                      | Access & secret key                                           |
+| Optional: The selected identity must access a role in another account or a restricted target role  | Configure Assume Role in addition to one of the methods above |
 
 ## Configure authentication
 

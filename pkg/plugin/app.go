@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -31,11 +32,21 @@ type identityAPI interface {
 	) (*sts.GetCallerIdentityOutput, error)
 }
 
+type eventBridgeAPI interface {
+	PutEvents(
+		ctx context.Context,
+		params *eventbridge.PutEventsInput,
+		optFns ...func(*eventbridge.Options),
+	) (*eventbridge.PutEventsOutput, error)
+}
+
 // App is the EventBridge emitter backend.
 type App struct {
 	backend.CallResourceHandler
-	awsConfigs        awsauth.ConfigProvider
-	newIdentityClient func(aws.Config) identityAPI
+	awsConfigs           awsauth.ConfigProvider
+	newIdentityClient    func(aws.Config) identityAPI
+	newEventBridgeClient func(aws.Config) eventBridgeAPI
+	templates            TemplateRepository
 }
 
 // NewApp creates a new *App instance.
@@ -45,7 +56,11 @@ func NewApp(_ context.Context, _ backend.AppInstanceSettings) (instancemgmt.Inst
 	app.newIdentityClient = func(cfg aws.Config) identityAPI {
 		return sts.NewFromConfig(cfg)
 	}
-
+	app.newEventBridgeClient = func(cfg aws.Config) eventBridgeAPI {
+		return eventbridge.NewFromConfig(cfg, func(options *eventbridge.Options) {
+			options.Retryer = aws.NopRetryer{}
+		})
+	}
 	// Use a httpadapter (provided by the SDK) for resource calls. This allows us
 	// to use a *http.ServeMux for resource calls, so we can map multiple routes
 	// to CallResource without having to implement extra logic.

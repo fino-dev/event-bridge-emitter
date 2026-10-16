@@ -8,3 +8,26 @@ apps:
     jsonData:
       authType: default
       defaultRegion: ap-northeast-1
+      templates:
+        - id: ingest-yahoo-history
+          name: Ingest Yahoo history
+          description: Start Yahoo Finance history ingestion for the selected tickers.
+          tags:
+            - pipeline
+            - yahoo
+            - history
+          target:
+            region: ap-northeast-1
+            eventBusName: toshi-lab-dev-pipeline-bus
+          event:
+            source: toshi-lab.pipeline
+            detailType: YahooHistoryIngest
+            fixedDetail: {}
+            fields:
+              - key: tickers
+                label: Tickers
+                type: json
+                required: true
+                default:
+                  - AAPL
+                  - GOOG
