@@ -13,8 +13,8 @@ export function AssumeRoleFields({ assumeRoleArn, externalId, onChange }: Assume
   return (
     <>
       <Field
-        label="Assume Role ARN"
-        description="Optional. The selected credentials assume this IAM role, and the role receives the AWS permissions."
+        label="Optional: Assume Role ARN"
+        description="The selected credentials assume this IAM role, and the role receives the AWS permissions."
         htmlFor="config-assume-role-arn"
       >
         <Input
