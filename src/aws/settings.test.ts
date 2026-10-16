@@ -12,6 +12,10 @@ describe('visibleAuthProviders', () => {
   test('hides providers the Grafana server does not allow, including Grafana Assume Role', () => {
     expect(visibleAuthProviders(['keys', 'grafana_assume_role']).map((provider) => provider.value)).toEqual(['keys']);
   });
+
+  test('does not expose the redundant workspace IAM role provider', () => {
+    expect(visibleAuthProviders(['ec2_iam_role'])).toEqual([]);
+  });
 });
 
 describe('buildAwsSettingsUpdate', () => {
