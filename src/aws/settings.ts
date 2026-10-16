@@ -1,14 +1,15 @@
+import { EventTemplate } from '../templates/types';
+
 export type AwsAuthType = 'default' | 'credentials' | 'keys';
 
 export interface AwsAuthJsonData {
   authType?: AwsAuthType;
   profile?: string;
   defaultRegion?: string;
-  templateTableName?: string;
-  templateTableRegion?: string;
+  templates?: EventTemplate[];
   assumeRoleArn?: string;
   externalId?: string;
-  [key: string]: string | undefined;
+  [key: string]: unknown;
 }
 
 export interface AwsIdentity {
@@ -59,8 +60,7 @@ interface AwsAuthFormState {
   defaultRegion: string;
   assumeRoleArn: string;
   externalId: string;
-  templateTableName: string;
-  templateTableRegion: string;
+  templates?: EventTemplate[];
   accessKey: string;
   secretKey: string;
   isAccessKeySet: boolean;
@@ -77,9 +77,10 @@ export function buildAwsSettingsUpdate(state: AwsAuthFormState): {
     defaultRegion: state.defaultRegion.trim(),
     assumeRoleArn: state.assumeRoleEnabled ? state.assumeRoleArn.trim() : '',
     externalId: state.assumeRoleEnabled ? state.externalId.trim() : '',
-    templateTableName: state.templateTableName.trim(),
-    templateTableRegion: state.templateTableRegion.trim(),
   };
+  if (state.templates) {
+    jsonData.templates = state.templates;
+  }
   if (state.authType === 'credentials') {
     jsonData.profile = state.profile.trim();
   }

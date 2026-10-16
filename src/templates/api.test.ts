@@ -16,7 +16,6 @@ describe('buildEventDetail', () => {
           { key: 'attempt', label: 'Attempt', type: 'number', required: true },
         ],
       },
-      version: 1,
     };
 
     expect(buildEventDetail(template, { enabled: false, attempt: 0 })).toEqual({
@@ -37,7 +36,6 @@ describe('buildEventDetail', () => {
         fixedDetail: {},
         fields: [{ key: 'comment', label: 'Comment', type: 'string', required: false }],
       },
-      version: 1,
     };
 
     expect(buildEventDetail(template, { comment: '' })).toEqual({ comment: '' });

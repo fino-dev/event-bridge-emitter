@@ -1,15 +1,12 @@
 package plugin
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"regexp"
-	"sort"
 	"strings"
-	"time"
 )
 
 const maxEventDetailBytes = 256 * 1024
@@ -24,9 +21,6 @@ type Template struct {
 	Tags        []string       `json:"tags,omitempty"`
 	Target      TemplateTarget `json:"target"`
 	Event       TemplateEvent  `json:"event"`
-	Version     int64          `json:"version"`
-	CreatedAt   string         `json:"createdAt,omitempty"`
-	UpdatedAt   string         `json:"updatedAt,omitempty"`
 }
 
 // TemplateTarget identifies the EventBridge destination.
@@ -101,7 +95,7 @@ func (t Template) EventDetail(values TemplateValues) ([]byte, error) {
 	return payload, nil
 }
 
-// Validate checks template metadata and field definitions before persistence or execution.
+// Validate checks template metadata and field definitions before provisioning or execution.
 func (t Template) Validate() error {
 	if strings.TrimSpace(t.ID) == "" {
 		return errors.New("template id is required")
@@ -272,22 +266,4 @@ func isJSONNumber(value any) bool {
 	default:
 		return false
 	}
-}
-
-func sortedTemplates(templates []Template) {
-	sort.Slice(templates, func(i, j int) bool {
-		return strings.ToLower(templates[i].Name) < strings.ToLower(templates[j].Name)
-	})
-}
-
-func newTemplateID() string {
-	var raw [16]byte
-	if _, err := rand.Read(raw[:]); err != nil {
-		// crypto/rand failures are exceptionally unlikely; the timestamp keeps the
-		// fallback unique enough to report a useful ID to the caller.
-		return fmt.Sprintf("template-%d", time.Now().UnixNano())
-	}
-	raw[6] = (raw[6] & 0x0f) | 0x40
-	raw[8] = (raw[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", raw[0:4], raw[4:6], raw[6:8], raw[8:10], raw[10:16])
 }

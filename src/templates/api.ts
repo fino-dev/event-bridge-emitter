@@ -22,28 +22,16 @@ export async function listTemplates(pluginId: string, query = ''): Promise<Event
   return response.templates;
 }
 
-export function createTemplate(
-  pluginId: string,
-  template: Omit<EventTemplate, 'id' | 'version'>
-): Promise<EventTemplate> {
-  return request<EventTemplate>(templatesUrl(pluginId), 'POST', template);
-}
-
-export function updateTemplate(pluginId: string, template: EventTemplate): Promise<EventTemplate> {
-  const { id, createdAt: _createdAt, updatedAt: _updatedAt, ...payload } = template;
-  return request<EventTemplate>(`${templatesUrl(pluginId)}/${encodeURIComponent(id)}`, 'PUT', payload);
-}
-
-export function deleteTemplate(pluginId: string, id: string): Promise<void> {
-  return request<void>(`${templatesUrl(pluginId)}/${encodeURIComponent(id)}`, 'DELETE');
-}
-
 export function executeTemplate(
   pluginId: string,
   id: string,
+  detailType: string,
   values: Record<string, unknown>
 ): Promise<ExecutionResponse> {
-  return request<ExecutionResponse>(`${templatesUrl(pluginId)}/${encodeURIComponent(id)}/execute`, 'POST', { values });
+  return request<ExecutionResponse>(`${templatesUrl(pluginId)}/${encodeURIComponent(id)}/execute`, 'POST', {
+    detailType,
+    values,
+  });
 }
 
 export function errorMessage(error: unknown): string {

@@ -28,9 +28,6 @@ export interface EventTemplate {
   tags?: string[];
   target: TemplateTarget;
   event: TemplateEvent;
-  version: number;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface ExecutionResponse {

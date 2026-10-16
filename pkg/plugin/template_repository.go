@@ -4,119 +4,56 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
-	"sync"
-	"time"
 )
 
-var (
-	ErrTemplateNotFound = errors.New("template not found")
-	ErrTemplateConflict = errors.New("template was updated by another user")
-)
+var ErrTemplateNotFound = errors.New("template not found")
 
-// TemplateRepository stores templates within a Grafana organization.
+// TemplateRepository provides templates loaded from Grafana app provisioning
+// settings. Template definitions are immutable at runtime.
 type TemplateRepository interface {
-	List(ctx context.Context, namespace string, query string) ([]Template, error)
-	Get(ctx context.Context, namespace string, id string) (Template, error)
-	Create(ctx context.Context, namespace string, template Template) (Template, error)
-	Update(ctx context.Context, namespace string, id string, template Template, expectedVersion int64) (Template, error)
-	Delete(ctx context.Context, namespace string, id string) error
+	List(ctx context.Context, query string) ([]Template, error)
+	Get(ctx context.Context, id string) (Template, error)
 }
 
-// memoryTemplateRepository is intentionally limited to tests. Production instances use DynamoDB.
-type memoryTemplateRepository struct {
-	mu    sync.RWMutex
-	items map[string]map[string]Template
-	now   func() time.Time
+type provisionedTemplateRepository struct {
+	items map[string]Template
 }
 
-func newMemoryTemplateRepository() *memoryTemplateRepository {
-	return &memoryTemplateRepository{
-		items: make(map[string]map[string]Template),
-		now:   time.Now,
+func newProvisionedTemplateRepository(templates []Template) (*provisionedTemplateRepository, error) {
+	repository := &provisionedTemplateRepository{items: make(map[string]Template, len(templates))}
+	for _, template := range templates {
+		if err := template.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid provisioned template %q: %w", template.ID, err)
+		}
+		if _, exists := repository.items[template.ID]; exists {
+			return nil, fmt.Errorf("duplicate provisioned template id %q", template.ID)
+		}
+		repository.items[template.ID] = cloneTemplate(template)
 	}
+	return repository, nil
 }
 
-func (r *memoryTemplateRepository) List(_ context.Context, namespace string, query string) ([]Template, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	orgItems := r.items[orgKey(namespace)]
-	result := make([]Template, 0, len(orgItems))
-	for _, template := range orgItems {
+func (r *provisionedTemplateRepository) List(_ context.Context, query string) ([]Template, error) {
+	result := make([]Template, 0, len(r.items))
+	for _, template := range r.items {
 		if matchesTemplateQuery(template, query) {
 			result = append(result, cloneTemplate(template))
 		}
 	}
-	sortedTemplates(result)
+	sort.Slice(result, func(i, j int) bool {
+		return strings.ToLower(result[i].Name) < strings.ToLower(result[j].Name)
+	})
 	return result, nil
 }
 
-func (r *memoryTemplateRepository) Get(_ context.Context, namespace string, id string) (Template, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	template, ok := r.items[orgKey(namespace)][id]
+func (r *provisionedTemplateRepository) Get(_ context.Context, id string) (Template, error) {
+	template, ok := r.items[id]
 	if !ok {
 		return Template{}, ErrTemplateNotFound
 	}
 	return cloneTemplate(template), nil
-}
-
-func (r *memoryTemplateRepository) Create(_ context.Context, namespace string, template Template) (Template, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	org := r.items[orgKey(namespace)]
-	if org == nil {
-		org = make(map[string]Template)
-		r.items[orgKey(namespace)] = org
-	}
-	if _, exists := org[template.ID]; exists {
-		return Template{}, ErrTemplateConflict
-	}
-	now := r.now().UTC().Format(time.RFC3339Nano)
-	template.Version = 1
-	template.CreatedAt = now
-	template.UpdatedAt = now
-	org[template.ID] = cloneTemplate(template)
-	return cloneTemplate(template), nil
-}
-
-func (r *memoryTemplateRepository) Update(_ context.Context, namespace string, id string, template Template, expectedVersion int64) (Template, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	org := r.items[orgKey(namespace)]
-	current, ok := org[id]
-	if !ok {
-		return Template{}, ErrTemplateNotFound
-	}
-	if current.Version != expectedVersion {
-		return Template{}, ErrTemplateConflict
-	}
-	template.ID = id
-	template.Version = current.Version + 1
-	template.CreatedAt = current.CreatedAt
-	template.UpdatedAt = r.now().UTC().Format(time.RFC3339Nano)
-	org[id] = cloneTemplate(template)
-	return cloneTemplate(template), nil
-}
-
-func (r *memoryTemplateRepository) Delete(_ context.Context, namespace string, id string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	org := r.items[orgKey(namespace)]
-	if _, ok := org[id]; !ok {
-		return ErrTemplateNotFound
-	}
-	delete(org, id)
-	return nil
-}
-
-func orgKey(namespace string) string {
-	return fmt.Sprintf("org:%s", strings.TrimSpace(namespace))
 }
 
 func cloneTemplate(template Template) Template {

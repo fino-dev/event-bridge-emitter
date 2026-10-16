@@ -17,28 +17,9 @@ import (
 
 const maxTemplateRequestBytes = 1 << 20
 
-type templateWriteRequest struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Tags        []string       `json:"tags"`
-	Target      TemplateTarget `json:"target"`
-	Event       TemplateEvent  `json:"event"`
-	Version     int64          `json:"version,omitempty"`
-}
-
-func (r templateWriteRequest) template(id string) Template {
-	return Template{
-		ID:          id,
-		Name:        strings.TrimSpace(r.Name),
-		Description: strings.TrimSpace(r.Description),
-		Tags:        normalizeTags(r.Tags),
-		Target:      r.Target,
-		Event:       r.Event,
-	}
-}
-
 type executeTemplateRequest struct {
-	Values TemplateValues `json:"values"`
+	DetailType string         `json:"detailType"`
+	Values     TemplateValues `json:"values"`
 }
 
 type executionResponse struct {
@@ -54,47 +35,23 @@ func (a *App) handleTemplateCollection(w http.ResponseWriter, req *http.Request)
 	if !ok {
 		return
 	}
-	if req.Method != http.MethodGet && !roleAtLeast(pluginCtx.User, roleEditor) {
-		writeTemplateError(w, http.StatusForbidden, errors.New("editor role is required"))
+	if req.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		writeTemplateError(w, http.StatusMethodNotAllowed, errors.New("template definitions are managed by Grafana provisioning"))
 		return
 	}
-
 	repository, err := a.templateRepository(req.Context(), pluginCtx.AppInstanceSettings)
 	if err != nil {
 		writeTemplateError(w, http.StatusServiceUnavailable, err)
 		return
 	}
-	if req.Method == http.MethodGet {
-		query := req.URL.Query().Get("q")
-		templates, err := repository.List(req.Context(), pluginCtx.Namespace, query)
-		if err != nil {
-			writeTemplateError(w, http.StatusBadGateway, err)
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]any{"templates": templates})
-		return
-	}
-	if req.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodGet+", "+http.MethodPost)
-		writeTemplateError(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
-		return
-	}
-	var payload templateWriteRequest
-	if err := decodeTemplateBody(req, &payload); err != nil {
-		writeTemplateError(w, http.StatusBadRequest, err)
-		return
-	}
-	template := payload.template(newTemplateID())
-	if err := template.Validate(); err != nil {
-		writeTemplateError(w, http.StatusBadRequest, err)
-		return
-	}
-	created, err := repository.Create(req.Context(), pluginCtx.Namespace, template)
+	query := req.URL.Query().Get("q")
+	templates, err := repository.List(req.Context(), query)
 	if err != nil {
-		writeTemplateRepositoryError(w, err)
+		writeTemplateError(w, http.StatusBadGateway, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, created)
+	writeJSON(w, http.StatusOK, map[string]any{"templates": templates})
 }
 
 func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
@@ -113,8 +70,9 @@ func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
 			writeTemplateError(w, http.StatusForbidden, errors.New("editor role is required"))
 			return
 		}
-	} else if len(segments) == 2 && req.Method != http.MethodGet && !roleAtLeast(pluginCtx.User, roleEditor) {
-		writeTemplateError(w, http.StatusForbidden, errors.New("editor role is required"))
+	} else if len(segments) == 2 && req.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		writeTemplateError(w, http.StatusMethodNotAllowed, errors.New("template definitions are managed by Grafana provisioning"))
 		return
 	}
 	repository, err := a.templateRepository(req.Context(), pluginCtx.AppInstanceSettings)
@@ -138,47 +96,20 @@ func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case http.MethodGet:
-		template, err := repository.Get(req.Context(), pluginCtx.Namespace, id)
+		template, err := repository.Get(req.Context(), id)
 		if err != nil {
 			writeTemplateRepositoryError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, template)
-	case http.MethodPut:
-		var payload templateWriteRequest
-		if err := decodeTemplateBody(req, &payload); err != nil {
-			writeTemplateError(w, http.StatusBadRequest, err)
-			return
-		}
-		template := payload.template(id)
-		if err := template.Validate(); err != nil {
-			writeTemplateError(w, http.StatusBadRequest, err)
-			return
-		}
-		if payload.Version < 1 {
-			writeTemplateError(w, http.StatusBadRequest, errors.New("template version is required for updates"))
-			return
-		}
-		updated, err := repository.Update(req.Context(), pluginCtx.Namespace, id, template, payload.Version)
-		if err != nil {
-			writeTemplateRepositoryError(w, err)
-			return
-		}
-		writeJSON(w, http.StatusOK, updated)
-	case http.MethodDelete:
-		if err := repository.Delete(req.Context(), pluginCtx.Namespace, id); err != nil {
-			writeTemplateRepositoryError(w, err)
-			return
-		}
-		w.WriteHeader(http.StatusNoContent)
 	default:
-		w.Header().Set("Allow", http.MethodGet+", "+http.MethodPut+", "+http.MethodDelete)
-		writeTemplateError(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
+		w.Header().Set("Allow", http.MethodGet)
+		writeTemplateError(w, http.StatusMethodNotAllowed, errors.New("template definitions are managed by Grafana provisioning"))
 	}
 }
 
 func (a *App) executeTemplate(w http.ResponseWriter, req *http.Request, repository TemplateRepository, pluginCtx backend.PluginContext, id string) {
-	template, err := repository.Get(req.Context(), pluginCtx.Namespace, id)
+	template, err := repository.Get(req.Context(), id)
 	if err != nil {
 		writeTemplateRepositoryError(w, err)
 		return
@@ -193,6 +124,14 @@ func (a *App) executeTemplate(w http.ResponseWriter, req *http.Request, reposito
 		writeTemplateError(w, http.StatusBadRequest, err)
 		return
 	}
+	detailType := template.Event.DetailType
+	if strings.TrimSpace(payload.DetailType) != "" {
+		detailType = strings.TrimSpace(payload.DetailType)
+		if err := validateEventName("detail type", detailType); err != nil {
+			writeTemplateError(w, http.StatusBadRequest, err)
+			return
+		}
+	}
 	cfg, err := a.awsConfig(req.Context(), pluginCtx.AppInstanceSettings)
 	if err != nil {
 		writeTemplateError(w, authStatusCode(err), err)
@@ -203,7 +142,7 @@ func (a *App) executeTemplate(w http.ResponseWriter, req *http.Request, reposito
 	output, err := client.PutEvents(req.Context(), &eventbridge.PutEventsInput{
 		Entries: []types.PutEventsRequestEntry{{
 			Detail:       aws.String(string(detail)),
-			DetailType:   aws.String(template.Event.DetailType),
+			DetailType:   aws.String(detailType),
 			EventBusName: aws.String(template.Target.EventBusName),
 			Source:       aws.String(template.Event.Source),
 		}},
@@ -248,10 +187,6 @@ func requireTemplateRole(w http.ResponseWriter, req *http.Request, role template
 	}
 	if !roleAtLeast(pluginCtx.User, role) {
 		writeTemplateError(w, http.StatusForbidden, fmt.Errorf("%s role is required", role))
-		return pluginCtx, false
-	}
-	if strings.TrimSpace(pluginCtx.Namespace) == "" {
-		writeTemplateError(w, http.StatusBadRequest, errors.New("grafana organization context is required"))
 		return pluginCtx, false
 	}
 	return pluginCtx, true
@@ -301,20 +236,10 @@ func decodeTemplateBody(req *http.Request, destination any) error {
 	return nil
 }
 
-func normalizeTags(tags []string) []string {
-	result := make([]string, 0, len(tags))
-	for _, tag := range tags {
-		result = append(result, strings.TrimSpace(tag))
-	}
-	return result
-}
-
 func writeTemplateRepositoryError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrTemplateNotFound):
 		writeTemplateError(w, http.StatusNotFound, err)
-	case errors.Is(err, ErrTemplateConflict):
-		writeTemplateError(w, http.StatusConflict, err)
 	default:
 		writeTemplateError(w, http.StatusBadGateway, err)
 	}

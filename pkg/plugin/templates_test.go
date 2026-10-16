@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"strings"
 	"testing"
 )
@@ -68,28 +67,40 @@ func TestTemplateValidationRejectsInvalidDefinitions(t *testing.T) {
 	}
 }
 
-func TestMemoryTemplateRepositoryUsesOrgAndVersionIsolation(t *testing.T) {
-	repository := newMemoryTemplateRepository()
-	template, err := repository.Create(context.Background(), "org-1", testTemplate())
+func TestProvisionedTemplateRepositoryIsReadOnlyAndSearchable(t *testing.T) {
+	other := testTemplate()
+	other.ID = "template-2"
+	other.Name = "Weekly pipeline"
+	other.Event.DetailType = "StartWeeklyPipeline"
+	repository, err := newProvisionedTemplateRepository([]Template{testTemplate(), other})
 	if err != nil {
-		t.Fatalf("create: %s", err)
+		t.Fatalf("provision repository: %s", err)
 	}
-	if template.Version != 1 {
-		t.Fatalf("version = %d", template.Version)
-	}
-	if _, err := repository.Get(context.Background(), "org-2", template.ID); !errors.Is(err, ErrTemplateNotFound) {
-		t.Fatalf("other org get error = %v", err)
-	}
-	updated := template
-	updated.Name = "Updated"
-	if _, err := repository.Update(context.Background(), "org-1", template.ID, updated, 99); !errors.Is(err, ErrTemplateConflict) {
-		t.Fatalf("stale update error = %v", err)
-	}
-	updated, err = repository.Update(context.Background(), "org-1", template.ID, updated, template.Version)
+
+	templates, err := repository.List(context.Background(), "daily")
 	if err != nil {
-		t.Fatalf("update: %s", err)
+		t.Fatalf("list: %s", err)
 	}
-	if updated.Version != 2 || updated.Name != "Updated" {
-		t.Fatalf("updated = %+v", updated)
+	if len(templates) != 1 || templates[0].ID != "template-1" {
+		t.Fatalf("templates = %+v", templates)
+	}
+
+	template, err := repository.Get(context.Background(), "template-1")
+	if err != nil {
+		t.Fatalf("get: %s", err)
+	}
+	template.Name = "mutated"
+	stored, err := repository.Get(context.Background(), "template-1")
+	if err != nil {
+		t.Fatalf("get after mutation: %s", err)
+	}
+	if stored.Name != "Daily pipeline" {
+		t.Fatalf("repository was mutated through returned template: %+v", stored)
+	}
+}
+
+func TestProvisionedTemplateRepositoryRejectsDuplicateIDs(t *testing.T) {
+	if _, err := newProvisionedTemplateRepository([]Template{testTemplate(), testTemplate()}); err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("duplicate template error = %v", err)
 	}
 }

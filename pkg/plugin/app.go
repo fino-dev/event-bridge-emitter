@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
@@ -47,7 +46,6 @@ type App struct {
 	awsConfigs           awsauth.ConfigProvider
 	newIdentityClient    func(aws.Config) identityAPI
 	newEventBridgeClient func(aws.Config) eventBridgeAPI
-	newDynamoClient      func(aws.Config) dynamoDBAPI
 	templates            TemplateRepository
 }
 
@@ -63,10 +61,6 @@ func NewApp(_ context.Context, _ backend.AppInstanceSettings) (instancemgmt.Inst
 			options.Retryer = aws.NopRetryer{}
 		})
 	}
-	app.newDynamoClient = func(cfg aws.Config) dynamoDBAPI {
-		return dynamodb.NewFromConfig(cfg)
-	}
-
 	// Use a httpadapter (provided by the SDK) for resource calls. This allows us
 	// to use a *http.ServeMux for resource calls, so we can map multiple routes
 	// to CallResource without having to implement extra logic.
