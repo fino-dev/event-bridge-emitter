@@ -1,0 +1,156 @@
+import { Alert, Badge, Button, Card, Field, FieldSet, Icon, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
+import React, { useMemo, useState } from 'react';
+import pluginJson from '../../plugin.json';
+import { buildEventDetail, errorMessage, executeTemplate } from '../../templates/api';
+import { EventTemplate } from '../../templates/types';
+import { ExecutionField } from './ExecutionField';
+import { getStyles } from './TemplateExecutor.styles';
+
+interface TemplateExecutorProps {
+  template: EventTemplate;
+  onCancel: () => void;
+}
+
+export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) {
+  const styles = useStyles2(getStyles);
+  const [detailType, setDetailType] = useState(template.event.detailType);
+  const [values, setValues] = useState<Record<string, unknown>>(() => {
+    const defaults: Record<string, unknown> = {};
+    for (const field of template.event.fields) {
+      if (field.default !== undefined) {
+        defaults[field.key] = field.default;
+      } else if (field.type === 'boolean' && field.required) {
+        defaults[field.key] = false;
+      }
+    }
+    return defaults;
+  });
+  const [rawJSONValues, setRawJSONValues] = useState<Record<string, string>>(() => {
+    const rawValues: Record<string, string> = {};
+    for (const field of template.event.fields) {
+      if (field.type === 'json') {
+        rawValues[field.key] = formatJSONValue(field.default);
+      }
+    }
+    return rawValues;
+  });
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ severity: 'success' | 'error'; message: string }>();
+  const preview = useMemo(() => JSON.stringify(buildEventDetail(template, values), null, 2), [template, values]);
+
+  const setValue = (key: string, value: unknown) =>
+    setValues((current) => {
+      const next = { ...current };
+      if (value === undefined) {
+        delete next[key];
+      } else {
+        next[key] = value;
+      }
+      return next;
+    });
+
+  const send = async () => {
+    setSending(true);
+    setResult(undefined);
+    try {
+      const response = await executeTemplate(pluginJson.id, template.id, detailType, values);
+      setResult({
+        severity: response.status === 'accepted' ? 'success' : 'error',
+        message: response.message || response.errorMessage || response.status,
+      });
+    } catch (requestError) {
+      setResult({ severity: 'error', message: errorMessage(requestError) });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <section className={styles.executor} aria-labelledby="executor-heading">
+      <div className={styles.executorHeader}>
+        <div>
+          <Button variant="secondary" fill="text" icon="arrow-left" onClick={onCancel}>
+            Back to templates
+          </Button>
+          <div className={styles.executorTitleGroup}>
+            <div className={styles.eyebrow}>
+              <Icon name="play" size="sm" />
+              Event execution
+            </div>
+            <h2 id="executor-heading" className={styles.executorTitle}>
+              Use {template.name}
+            </h2>
+            <p className={styles.sectionDescription}>
+              Values below are applied at send time. The template itself is managed through provisioning.
+            </p>
+          </div>
+        </div>
+        <Badge color="blue" text="Provisioned" />
+      </div>
+
+      <div className={styles.destinationNotice}>
+        <Icon name="cloud-provider" size="sm" />
+        <span>
+          Sending to <strong>{template.target.eventBusName}</strong> in <strong>{template.target.region}</strong>
+        </span>
+      </div>
+
+      <div className={styles.executorGrid}>
+        <Card className={styles.executorCard} noMargin>
+          <Card.Heading>Event values</Card.Heading>
+          <Card.Description>Customize the provided fields before sending this event.</Card.Description>
+          <div className={styles.formBody}>
+            <Field label="Detail type" description="Defaults to the value defined by the provisioned template">
+              <Input value={detailType} onChange={(event) => setDetailType(event.currentTarget.value)} />
+            </Field>
+            <FieldSet label="Template fields">
+              <Stack direction="column" gap={2}>
+                {template.event.fields.map((field) => (
+                  <ExecutionField
+                    key={field.key}
+                    field={field}
+                    value={values[field.key]}
+                    rawValue={rawJSONValues[field.key]}
+                    onRawChange={(rawValue) => setRawJSONValues((current) => ({ ...current, [field.key]: rawValue }))}
+                    onChange={(value) => setValue(field.key, value)}
+                  />
+                ))}
+              </Stack>
+            </FieldSet>
+          </div>
+          <Card.Actions>
+            <Button icon="play" onClick={() => void send()} disabled={sending}>
+              {sending ? 'Sending…' : 'Send event'}
+            </Button>
+            <Button variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+          </Card.Actions>
+        </Card>
+
+        <Card className={styles.executorCard} noMargin>
+          <Card.Heading>Event preview</Card.Heading>
+          <Card.Description>Review the detail payload that will be sent to EventBridge.</Card.Description>
+          <div className={styles.previewBody}>
+            <TextArea readOnly rows={16} value={preview} aria-label="Event JSON preview" />
+          </div>
+          {result && (
+            <Alert
+              severity={result.severity}
+              title={result.severity === 'success' ? 'Event accepted' : 'Event not accepted'}
+            >
+              {result.message}
+            </Alert>
+          )}
+        </Card>
+      </div>
+    </section>
+  );
+}
+
+function formatJSONValue(value: unknown): string {
+  if (value === undefined) {
+    return '';
+  }
+  return JSON.stringify(value, null, 2) ?? '';
+}
