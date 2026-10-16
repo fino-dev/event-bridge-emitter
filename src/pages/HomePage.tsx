@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { PluginPage } from '@grafana/runtime';
+import { config, PluginPage } from '@grafana/runtime';
 import { Alert, Button, Field, Input, Spinner, TextArea } from '@grafana/ui';
 import pluginJson from '../plugin.json';
 import { testIds } from '../components/testIds';
@@ -25,6 +25,7 @@ const emptyTemplate: EventTemplate = {
 };
 
 function HomePage() {
+  const canManageTemplates = config.bootData.user.orgRole === 'Editor' || config.bootData.user.orgRole === 'Admin';
   const [templates, setTemplates] = useState<EventTemplate[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -125,15 +126,25 @@ function HomePage() {
             <p>Manage reusable EventBridge events and send them through the configured Grafana backend.</p>
           </div>
           <div className="page-actions">
-            <Button variant="secondary" onClick={() => document.getElementById('template-import')?.click()}>
-              Import JSON
-            </Button>
-            <input id="template-import" type="file" accept="application/json,.json" hidden onChange={importTemplate} />
-            <Button
-              onClick={() => setEditing({ ...emptyTemplate, event: { ...emptyTemplate.event, fixedDetail: {} } })}
-            >
-              New template
-            </Button>
+            {canManageTemplates && (
+              <>
+                <Button variant="secondary" onClick={() => document.getElementById('template-import')?.click()}>
+                  Import JSON
+                </Button>
+                <input
+                  id="template-import"
+                  type="file"
+                  accept="application/json,.json"
+                  hidden
+                  onChange={importTemplate}
+                />
+                <Button
+                  onClick={() => setEditing({ ...emptyTemplate, event: { ...emptyTemplate.event, fixedDetail: {} } })}
+                >
+                  New template
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -172,7 +183,9 @@ function HomePage() {
               <div className="empty-state">
                 <h2>No templates yet</h2>
                 <p>Create a template with fixed event metadata and the values your operators need to provide.</p>
-                <Button onClick={() => setEditing({ ...emptyTemplate })}>Create template</Button>
+                {canManageTemplates && (
+                  <Button onClick={() => setEditing({ ...emptyTemplate })}>Create template</Button>
+                )}
               </div>
             ) : (
               <div className="template-list">
@@ -207,19 +220,25 @@ function HomePage() {
                       <p className="template-tags">{template.tags.join(' · ')}</p>
                     )}
                     <div className="template-actions">
-                      <Button onClick={() => setExecuting(template)}>Execute</Button>
-                      <Button variant="secondary" onClick={() => setEditing(template)}>
-                        Edit
-                      </Button>
-                      <Button variant="secondary" onClick={() => duplicate(template)}>
-                        Duplicate
-                      </Button>
+                      {canManageTemplates && <Button onClick={() => setExecuting(template)}>Execute</Button>}
+                      {canManageTemplates && (
+                        <Button variant="secondary" onClick={() => setEditing(template)}>
+                          Edit
+                        </Button>
+                      )}
+                      {canManageTemplates && (
+                        <Button variant="secondary" onClick={() => duplicate(template)}>
+                          Duplicate
+                        </Button>
+                      )}
                       <Button variant="secondary" onClick={() => exportTemplate(template)}>
                         Export
                       </Button>
-                      <Button variant="destructive" onClick={() => void remove(template)}>
-                        Delete
-                      </Button>
+                      {canManageTemplates && (
+                        <Button variant="destructive" onClick={() => void remove(template)}>
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -466,9 +485,20 @@ function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) {
     for (const field of template.event.fields) {
       if (field.default !== undefined) {
         defaults[field.key] = field.default;
+      } else if (field.type === 'boolean' && field.required) {
+        defaults[field.key] = false;
       }
     }
     return defaults;
+  });
+  const [rawJSONValues, setRawJSONValues] = useState<Record<string, string>>(() => {
+    const rawValues: Record<string, string> = {};
+    for (const field of template.event.fields) {
+      if (field.type === 'json') {
+        rawValues[field.key] = formatJSONValue(field.default);
+      }
+    }
+    return rawValues;
   });
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ severity: 'success' | 'error'; message: string }>();
@@ -521,6 +551,8 @@ function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) {
           key={field.key}
           field={field}
           value={values[field.key]}
+          rawValue={rawJSONValues[field.key]}
+          onRawChange={(rawValue) => setRawJSONValues((current) => ({ ...current, [field.key]: rawValue }))}
           onChange={(value) => setValue(field.key, value)}
         />
       ))}
@@ -550,10 +582,12 @@ function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) {
 interface ExecutionFieldProps {
   field: TemplateField;
   value: unknown;
+  rawValue?: string;
+  onRawChange?: (value: string) => void;
   onChange: (value: unknown) => void;
 }
 
-function ExecutionField({ field, value, onChange }: ExecutionFieldProps) {
+function ExecutionField({ field, value, rawValue, onRawChange, onChange }: ExecutionFieldProps) {
   const label = `${field.label}${field.required ? ' *' : ''}`;
   if (field.type === 'boolean') {
     return (
@@ -585,10 +619,12 @@ function ExecutionField({ field, value, onChange }: ExecutionFieldProps) {
       <Field label={label}>
         <TextArea
           rows={5}
-          value={value === undefined ? '' : JSON.stringify(value, null, 2)}
+          value={rawValue ?? formatJSONValue(value)}
           onChange={(event) => {
+            const nextRawValue = event.currentTarget.value;
+            onRawChange?.(nextRawValue);
             try {
-              onChange(event.currentTarget.value ? JSON.parse(event.currentTarget.value) : undefined);
+              onChange(nextRawValue ? JSON.parse(nextRawValue) : undefined);
             } catch {
               /* backend returns the validation error */
             }
@@ -614,6 +650,13 @@ function ExecutionField({ field, value, onChange }: ExecutionFieldProps) {
       />
     </Field>
   );
+}
+
+function formatJSONValue(value: unknown): string {
+  if (value === undefined) {
+    return '';
+  }
+  return JSON.stringify(value, null, 2) ?? '';
 }
 
 function formatFieldDefault(field: TemplateField): string {

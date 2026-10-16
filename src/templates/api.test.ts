@@ -25,4 +25,21 @@ describe('buildEventDetail', () => {
       attempt: 0,
     });
   });
+
+  test('keeps optional empty strings in the preview', () => {
+    const template: EventTemplate = {
+      id: 'template-2',
+      name: 'Example',
+      target: { region: 'ap-northeast-1', eventBusName: 'default' },
+      event: {
+        source: 'company.example',
+        detailType: 'Example',
+        fixedDetail: {},
+        fields: [{ key: 'comment', label: 'Comment', type: 'string', required: false }],
+      },
+      version: 1,
+    };
+
+    expect(buildEventDetail(template, { comment: '' })).toEqual({ comment: '' });
+  });
 });

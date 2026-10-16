@@ -66,7 +66,7 @@ func (a *App) handleTemplateCollection(w http.ResponseWriter, req *http.Request)
 	}
 	if req.Method == http.MethodGet {
 		query := req.URL.Query().Get("q")
-		templates, err := repository.List(req.Context(), pluginCtx.OrgID, query)
+		templates, err := repository.List(req.Context(), pluginCtx.Namespace, query)
 		if err != nil {
 			writeTemplateError(w, http.StatusBadGateway, err)
 			return
@@ -89,7 +89,7 @@ func (a *App) handleTemplateCollection(w http.ResponseWriter, req *http.Request)
 		writeTemplateError(w, http.StatusBadRequest, err)
 		return
 	}
-	created, err := repository.Create(req.Context(), pluginCtx.OrgID, template)
+	created, err := repository.Create(req.Context(), pluginCtx.Namespace, template)
 	if err != nil {
 		writeTemplateRepositoryError(w, err)
 		return
@@ -138,7 +138,7 @@ func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case http.MethodGet:
-		template, err := repository.Get(req.Context(), pluginCtx.OrgID, id)
+		template, err := repository.Get(req.Context(), pluginCtx.Namespace, id)
 		if err != nil {
 			writeTemplateRepositoryError(w, err)
 			return
@@ -159,14 +159,14 @@ func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
 			writeTemplateError(w, http.StatusBadRequest, errors.New("template version is required for updates"))
 			return
 		}
-		updated, err := repository.Update(req.Context(), pluginCtx.OrgID, id, template, payload.Version)
+		updated, err := repository.Update(req.Context(), pluginCtx.Namespace, id, template, payload.Version)
 		if err != nil {
 			writeTemplateRepositoryError(w, err)
 			return
 		}
 		writeJSON(w, http.StatusOK, updated)
 	case http.MethodDelete:
-		if err := repository.Delete(req.Context(), pluginCtx.OrgID, id); err != nil {
+		if err := repository.Delete(req.Context(), pluginCtx.Namespace, id); err != nil {
 			writeTemplateRepositoryError(w, err)
 			return
 		}
@@ -178,7 +178,7 @@ func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
 }
 
 func (a *App) executeTemplate(w http.ResponseWriter, req *http.Request, repository TemplateRepository, pluginCtx backend.PluginContext, id string) {
-	template, err := repository.Get(req.Context(), pluginCtx.OrgID, id)
+	template, err := repository.Get(req.Context(), pluginCtx.Namespace, id)
 	if err != nil {
 		writeTemplateRepositoryError(w, err)
 		return
@@ -243,15 +243,15 @@ const (
 func requireTemplateRole(w http.ResponseWriter, req *http.Request, role templateRole) (backend.PluginContext, bool) {
 	pluginCtx := backend.PluginConfigFromContext(req.Context())
 	if pluginCtx.User == nil {
-		writeTemplateError(w, http.StatusUnauthorized, errors.New("Grafana user context is required"))
+		writeTemplateError(w, http.StatusUnauthorized, errors.New("grafana user context is required"))
 		return pluginCtx, false
 	}
 	if !roleAtLeast(pluginCtx.User, role) {
 		writeTemplateError(w, http.StatusForbidden, fmt.Errorf("%s role is required", role))
 		return pluginCtx, false
 	}
-	if pluginCtx.OrgID <= 0 {
-		writeTemplateError(w, http.StatusBadRequest, errors.New("Grafana organization context is required"))
+	if strings.TrimSpace(pluginCtx.Namespace) == "" {
+		writeTemplateError(w, http.StatusBadRequest, errors.New("grafana organization context is required"))
 		return pluginCtx, false
 	}
 	return pluginCtx, true

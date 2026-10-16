@@ -16,11 +16,11 @@ var (
 
 // TemplateRepository stores templates within a Grafana organization.
 type TemplateRepository interface {
-	List(ctx context.Context, orgID int64, query string) ([]Template, error)
-	Get(ctx context.Context, orgID int64, id string) (Template, error)
-	Create(ctx context.Context, orgID int64, template Template) (Template, error)
-	Update(ctx context.Context, orgID int64, id string, template Template, expectedVersion int64) (Template, error)
-	Delete(ctx context.Context, orgID int64, id string) error
+	List(ctx context.Context, namespace string, query string) ([]Template, error)
+	Get(ctx context.Context, namespace string, id string) (Template, error)
+	Create(ctx context.Context, namespace string, template Template) (Template, error)
+	Update(ctx context.Context, namespace string, id string, template Template, expectedVersion int64) (Template, error)
+	Delete(ctx context.Context, namespace string, id string) error
 }
 
 // memoryTemplateRepository is intentionally limited to tests. Production instances use DynamoDB.
@@ -37,11 +37,11 @@ func newMemoryTemplateRepository() *memoryTemplateRepository {
 	}
 }
 
-func (r *memoryTemplateRepository) List(_ context.Context, orgID int64, query string) ([]Template, error) {
+func (r *memoryTemplateRepository) List(_ context.Context, namespace string, query string) ([]Template, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	orgItems := r.items[orgKey(orgID)]
+	orgItems := r.items[orgKey(namespace)]
 	result := make([]Template, 0, len(orgItems))
 	for _, template := range orgItems {
 		if matchesTemplateQuery(template, query) {
@@ -52,25 +52,25 @@ func (r *memoryTemplateRepository) List(_ context.Context, orgID int64, query st
 	return result, nil
 }
 
-func (r *memoryTemplateRepository) Get(_ context.Context, orgID int64, id string) (Template, error) {
+func (r *memoryTemplateRepository) Get(_ context.Context, namespace string, id string) (Template, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	template, ok := r.items[orgKey(orgID)][id]
+	template, ok := r.items[orgKey(namespace)][id]
 	if !ok {
 		return Template{}, ErrTemplateNotFound
 	}
 	return cloneTemplate(template), nil
 }
 
-func (r *memoryTemplateRepository) Create(_ context.Context, orgID int64, template Template) (Template, error) {
+func (r *memoryTemplateRepository) Create(_ context.Context, namespace string, template Template) (Template, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	org := r.items[orgKey(orgID)]
+	org := r.items[orgKey(namespace)]
 	if org == nil {
 		org = make(map[string]Template)
-		r.items[orgKey(orgID)] = org
+		r.items[orgKey(namespace)] = org
 	}
 	if _, exists := org[template.ID]; exists {
 		return Template{}, ErrTemplateConflict
@@ -83,11 +83,11 @@ func (r *memoryTemplateRepository) Create(_ context.Context, orgID int64, templa
 	return cloneTemplate(template), nil
 }
 
-func (r *memoryTemplateRepository) Update(_ context.Context, orgID int64, id string, template Template, expectedVersion int64) (Template, error) {
+func (r *memoryTemplateRepository) Update(_ context.Context, namespace string, id string, template Template, expectedVersion int64) (Template, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	org := r.items[orgKey(orgID)]
+	org := r.items[orgKey(namespace)]
 	current, ok := org[id]
 	if !ok {
 		return Template{}, ErrTemplateNotFound
@@ -103,11 +103,11 @@ func (r *memoryTemplateRepository) Update(_ context.Context, orgID int64, id str
 	return cloneTemplate(template), nil
 }
 
-func (r *memoryTemplateRepository) Delete(_ context.Context, orgID int64, id string) error {
+func (r *memoryTemplateRepository) Delete(_ context.Context, namespace string, id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	org := r.items[orgKey(orgID)]
+	org := r.items[orgKey(namespace)]
 	if _, ok := org[id]; !ok {
 		return ErrTemplateNotFound
 	}
@@ -115,8 +115,8 @@ func (r *memoryTemplateRepository) Delete(_ context.Context, orgID int64, id str
 	return nil
 }
 
-func orgKey(orgID int64) string {
-	return fmt.Sprintf("org:%d", orgID)
+func orgKey(namespace string) string {
+	return fmt.Sprintf("org:%s", strings.TrimSpace(namespace))
 }
 
 func cloneTemplate(template Template) Template {
@@ -139,9 +139,7 @@ func matchesTemplateQuery(template Template, query string) bool {
 		return true
 	}
 	values := []string{template.Name, template.Description, template.Target.Region, template.Target.EventBusName, template.Event.Source, template.Event.DetailType}
-	for _, tag := range template.Tags {
-		values = append(values, tag)
-	}
+	values = append(values, template.Tags...)
 	for _, value := range values {
 		if containsFold(value, query) {
 			return true

@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -11,8 +12,8 @@ import (
 
 func templatePluginContext(role string, orgID int64) backend.PluginContext {
 	return backend.PluginContext{
-		OrgID: orgID,
-		User:  &backend.User{Role: role},
+		Namespace: fmt.Sprintf("org-%d", orgID),
+		User:      &backend.User{Role: role},
 		AppInstanceSettings: &backend.AppInstanceSettings{
 			JSONData: []byte(`{"authType":"default","defaultRegion":"ap-northeast-1"}`),
 		},

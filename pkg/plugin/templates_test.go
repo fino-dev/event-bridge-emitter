@@ -70,22 +70,22 @@ func TestTemplateValidationRejectsInvalidDefinitions(t *testing.T) {
 
 func TestMemoryTemplateRepositoryUsesOrgAndVersionIsolation(t *testing.T) {
 	repository := newMemoryTemplateRepository()
-	template, err := repository.Create(context.Background(), 1, testTemplate())
+	template, err := repository.Create(context.Background(), "org-1", testTemplate())
 	if err != nil {
 		t.Fatalf("create: %s", err)
 	}
 	if template.Version != 1 {
 		t.Fatalf("version = %d", template.Version)
 	}
-	if _, err := repository.Get(context.Background(), 2, template.ID); !errors.Is(err, ErrTemplateNotFound) {
+	if _, err := repository.Get(context.Background(), "org-2", template.ID); !errors.Is(err, ErrTemplateNotFound) {
 		t.Fatalf("other org get error = %v", err)
 	}
 	updated := template
 	updated.Name = "Updated"
-	if _, err := repository.Update(context.Background(), 1, template.ID, updated, 99); !errors.Is(err, ErrTemplateConflict) {
+	if _, err := repository.Update(context.Background(), "org-1", template.ID, updated, 99); !errors.Is(err, ErrTemplateConflict) {
 		t.Fatalf("stale update error = %v", err)
 	}
-	updated, err = repository.Update(context.Background(), 1, template.ID, updated, template.Version)
+	updated, err = repository.Update(context.Background(), "org-1", template.ID, updated, template.Version)
 	if err != nil {
 		t.Fatalf("update: %s", err)
 	}

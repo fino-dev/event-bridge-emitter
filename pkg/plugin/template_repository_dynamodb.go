@@ -42,14 +42,14 @@ type dynamoTemplateItem struct {
 	UpdatedAt    string   `dynamodbav:"updatedAt"`
 }
 
-func (r *dynamoTemplateRepository) List(ctx context.Context, orgID int64, query string) ([]Template, error) {
+func (r *dynamoTemplateRepository) List(ctx context.Context, namespace string, query string) ([]Template, error) {
 	var result []Template
 	var startKey map[string]types.AttributeValue
 	for {
 		output, err := r.client.Query(ctx, &dynamodb.QueryInput{
 			TableName:                 aws.String(r.tableName),
 			KeyConditionExpression:    aws.String("orgId = :orgId"),
-			ExpressionAttributeValues: map[string]types.AttributeValue{":orgId": &types.AttributeValueMemberS{Value: orgKey(orgID)}},
+			ExpressionAttributeValues: map[string]types.AttributeValue{":orgId": &types.AttributeValueMemberS{Value: orgKey(namespace)}},
 			ExclusiveStartKey:         startKey,
 		})
 		if err != nil {
@@ -73,10 +73,11 @@ func (r *dynamoTemplateRepository) List(ctx context.Context, orgID int64, query 
 	return result, nil
 }
 
-func (r *dynamoTemplateRepository) Get(ctx context.Context, orgID int64, id string) (Template, error) {
+func (r *dynamoTemplateRepository) Get(ctx context.Context, namespace string, id string) (Template, error) {
 	output, err := r.client.GetItem(ctx, &dynamodb.GetItemInput{
-		TableName: aws.String(r.tableName),
-		Key:       templateKey(orgID, id),
+		TableName:      aws.String(r.tableName),
+		Key:            templateKey(namespace, id),
+		ConsistentRead: aws.Bool(true),
 	})
 	if err != nil {
 		return Template{}, fmt.Errorf("get template: %w", err)
@@ -87,12 +88,12 @@ func (r *dynamoTemplateRepository) Get(ctx context.Context, orgID int64, id stri
 	return decodeDynamoTemplate(output.Item)
 }
 
-func (r *dynamoTemplateRepository) Create(ctx context.Context, orgID int64, template Template) (Template, error) {
+func (r *dynamoTemplateRepository) Create(ctx context.Context, namespace string, template Template) (Template, error) {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	template.Version = 1
 	template.CreatedAt = now
 	template.UpdatedAt = now
-	item, err := encodeDynamoTemplate(orgID, template)
+	item, err := encodeDynamoTemplate(namespace, template)
 	if err != nil {
 		return Template{}, err
 	}
@@ -110,16 +111,16 @@ func (r *dynamoTemplateRepository) Create(ctx context.Context, orgID int64, temp
 	return template, nil
 }
 
-func (r *dynamoTemplateRepository) Update(ctx context.Context, orgID int64, id string, template Template, expectedVersion int64) (Template, error) {
-	current, err := r.Get(ctx, orgID, id)
+func (r *dynamoTemplateRepository) Update(ctx context.Context, namespace string, id string, template Template, expectedVersion int64) (Template, error) {
+	current, err := r.Get(ctx, namespace, id)
 	if err != nil {
 		return Template{}, err
 	}
 	template.ID = id
-	template.Version = current.Version + 1
+	template.Version = expectedVersion + 1
 	template.CreatedAt = current.CreatedAt
 	template.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	item, err := encodeDynamoTemplate(orgID, template)
+	item, err := encodeDynamoTemplate(namespace, template)
 	if err != nil {
 		return Template{}, err
 	}
@@ -140,10 +141,10 @@ func (r *dynamoTemplateRepository) Update(ctx context.Context, orgID int64, id s
 	return template, nil
 }
 
-func (r *dynamoTemplateRepository) Delete(ctx context.Context, orgID int64, id string) error {
+func (r *dynamoTemplateRepository) Delete(ctx context.Context, namespace string, id string) error {
 	_, err := r.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName:           aws.String(r.tableName),
-		Key:                 templateKey(orgID, id),
+		Key:                 templateKey(namespace, id),
 		ConditionExpression: aws.String("attribute_exists(orgId) AND attribute_exists(id)"),
 	})
 	if err != nil {
@@ -155,7 +156,7 @@ func (r *dynamoTemplateRepository) Delete(ctx context.Context, orgID int64, id s
 	return nil
 }
 
-func encodeDynamoTemplate(orgID int64, template Template) (map[string]types.AttributeValue, error) {
+func encodeDynamoTemplate(namespace string, template Template) (map[string]types.AttributeValue, error) {
 	fixedDetail, err := json.Marshal(template.Event.FixedDetail)
 	if err != nil {
 		return nil, fmt.Errorf("encode fixed detail: %w", err)
@@ -165,7 +166,7 @@ func encodeDynamoTemplate(orgID int64, template Template) (map[string]types.Attr
 		return nil, fmt.Errorf("encode template fields: %w", err)
 	}
 	return attributevalue.MarshalMap(dynamoTemplateItem{
-		OrgID:        orgKey(orgID),
+		OrgID:        orgKey(namespace),
 		ID:           template.ID,
 		Name:         template.Name,
 		Description:  template.Description,
@@ -208,9 +209,9 @@ func decodeDynamoTemplate(item map[string]types.AttributeValue) (Template, error
 	}, nil
 }
 
-func templateKey(orgID int64, id string) map[string]types.AttributeValue {
+func templateKey(namespace string, id string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		"orgId": &types.AttributeValueMemberS{Value: orgKey(orgID)},
+		"orgId": &types.AttributeValueMemberS{Value: orgKey(namespace)},
 		"id":    &types.AttributeValueMemberS{Value: id},
 	}
 }

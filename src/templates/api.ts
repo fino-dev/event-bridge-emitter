@@ -66,7 +66,7 @@ export function buildEventDetail(template: EventTemplate, values: Record<string,
   const detail = { ...template.event.fixedDetail };
   for (const field of template.event.fields) {
     const value = values[field.key] ?? field.default;
-    if (value !== undefined && value !== '') {
+    if (value !== undefined) {
       detail[field.key] = value;
     }
   }
