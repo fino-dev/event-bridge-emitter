@@ -6,17 +6,18 @@ Grafana のアプリ画面から、繰り返し使う EventBridge イベント�
 
 ## 2. リポジトリの現状
 
-- `src/pages/PageOne.tsx` から `PageFour.tsx` は Grafana アプリのサンプルページ。
-- `src/plugin.json` のナビゲーションも Page One〜Four のサンプル構成。
-- バックエンドは `pkg/plugin/app.go` と `pkg/plugin/resources.go` にあり、`/ping` と `/echo` の例リソースを提供している。
-- リポジトリ内の検索では AWS 認証や EventBridge 送信処理は確認できなかった。別ブランチなどに既存の認証実装がある場合はそれを再利用し、なければ AWS SDK for Go v2 の認証チェーンを使うところから着手する。
-- Grafana のアプリ設定はテンプレート保存用の永続ストレージではない。現在の `provisioning/plugins/apps.yaml` とアプリ設定画面にはサンプルの API URL/API key が残っている。
+- `src/pages/HomePage.tsx` が EventBridge Emitter のホーム画面で、現状はプレースホルダー表示。
+- `src/plugin.json` は EventBridge Emitter のホームと Admin 専用 Configuration をナビゲーションに登録している。`src/components/App/App.tsx` はホーム画面へルーティングする。
+- AWS 認証設定は既に実装済み。`src/components/AppConfig/` の設定画面から認証方式、リージョン、必要な認証情報を保存し、`pkg/plugin/aws_auth.go` が Grafana AWS SDK の設定プロバイダーを使って AWS 設定を構築する。
+- `/aws/identity` リソースと Grafana の `CheckHealth` は STS `GetCallerIdentity` で認証を確認する。`pkg/plugin/resources.go` には現在この認証確認ルートがある。
+- EventBridge `PutEvents`、テンプレートの CRUD、永続的なテンプレート保存はまだない。`provisioning/plugins/apps.yaml` は AWS 認証方式とデフォルトリージョンを設定している。
+- Grafana のアプリ設定はテンプレート保存用の永続ストレージではないため、テンプレートの保存先は別途決める必要がある。
 
 ## 3. 推奨する利用体験
 
 ### テンプレート一覧
 
-アプリの最初のページをテンプレート一覧にする。テンプレート名、説明、タグ、リージョン、イベントバス、Source、Detail type を表示し、名前・タグ・送信先で検索／絞り込みできるようにする。各行から「実行」「編集」「複製」を選べるようにする。
+現在プレースホルダーのホーム画面をテンプレート一覧にする。テンプレート名、説明、タグ、リージョン、イベントバス、Source、Detail type を表示し、名前・タグ・送信先で検索／絞り込みできるようにする。各行から「実行」「編集」「複製」を選べるようにする。既存の AWS Configuration 画面は維持する。
 
 ### テンプレート実行
 
@@ -63,16 +64,17 @@ Grafana のアプリ画面から、繰り返し使う EventBridge イベント�
 ## 5. AWS 接続と送信の設計
 
 - ブラウザーから AWS API を直接呼ばず、Grafana バックエンドのリソース API 経由で送信する。
-- Grafana が AWS 上で動作する場合は、EKS IRSA、ECS task role、EC2 instance profile 等のワークロードロールを第一候補にする。別環境では AssumeRole 等を検討する。長期アクセスキーを使う必要がある場合だけ Grafana の `secureJsonData` で受け取り、ログや応答に出さない。
+- 既存の AWS 認証設定と `awsConfigs` を使い、テンプレート実行時に同じ認証情報を EventBridge クライアントへ渡す。AWS 認証画面や STS 検証を新しく作り直さない。テンプレートのリージョン指定と設定画面の `defaultRegion` の優先順位を定める。
+- 既存設定で利用可能な認証方式を保ち、長期アクセスキーは現在と同様に Grafana の `secureJsonData` で扱う。認証情報をブラウザーや実行履歴に返さない。
 - IAM は対象 EventBridge バスへの `events:PutEvents` に限定する。テンプレート保存に DynamoDB を使う場合も、対象テーブルに必要な読み書き権限だけを追加する。
 - リージョン、イベントバス、Source、Detail type、Detail をサーバー側で検証してから AWS SDK の `PutEvents` を呼ぶ。
 - 初期版は1回の実行につき1イベントを送信し、EventBridge のイベントサイズ上限を超える payload を送信前に拒否する。
 - EventBridge の応答は HTTP 成功だけで判断せず、`FailedEntryCount` と各エントリーの `ErrorCode` / `ErrorMessage` を確認して、全成功・一部失敗・全失敗を分けて返す。
-- 送信リトライは自動で行わない。再送はイベントの重複起動につながる可能性があるため、結果を確認した利用者が明示的に行う。
+- アプリケーションによる自動再送を行わず、EventBridge クライアントには AWS SDK for Go v2 の `aws.NopRetryer` を設定して SDK 内部の再試行も無効にする。タイムアウト時は EventBridge で受理済みか判別できない可能性を示し、明示的な再送も重複起動になり得ることを伝える。
 
 ## 6. バックエンド API の案
 
-既存の `CallResourceHandler` に以下のリソースを追加する。すべて Grafana の認可コンテキストを検証し、入力 JSON のサイズ・形式を制限する。
+既存の `CallResourceHandler` と `/aws/identity` に加えて以下のリソースを追加する。すべて Grafana の認可コンテキストを検証し、入力 JSON のサイズ・形式を制限する。
 
 | 操作 | 用途 |
 | --- | --- |
@@ -89,15 +91,15 @@ Grafana のアプリ画面から、繰り返し使う EventBridge イベント�
 
 ### Phase 0: 前提整理
 
-- 実際に使う AWS 認証方式を確認し、既存実装があれば呼び出し方を特定する。
+- `pkg/plugin/aws_auth.go` の認証設定と AWS 設定プロバイダー、`AppConfig` の認証 UI を把握し、EventBridge クライアントから再利用する方法を決める。
 - テンプレートを Grafana org 内で共有するか、作成者ごとに分けるかを決める。推奨は org 共有。
 - DynamoDB のテーブル名、リージョン、Grafana ロールごとの「閲覧・編集・実行」権限を決める。
 
 ### Phase 1: アプリの骨格
 
-- 雛形の Page One〜Four を「Templates」「Executions」「Configuration」などの実画面に置き換える。
-- 設定画面を EventBridge 用に整理し、リージョンやデフォルト送信先などの非秘密設定を `jsonData` に、必要な秘密情報だけ `secureJsonData` に保存する。
-- `/ping`・`/echo` の例リソースを整理し、SDK の `CheckHealth` とテンプレート API の役割を明確にする。
+- `src/pages/HomePage.tsx` のプレースホルダーをテンプレート一覧に置き換え、既存の AWS Configuration 画面を維持する。
+- `defaultRegion` を再利用し、イベントバスなど追加設定が必要なら非秘密設定として `jsonData` に保存する。認証方式や秘密情報の保存処理は既存実装を使う。
+- `pkg/plugin/resources.go` の `/aws/identity` と `CheckHealth` を維持し、同じリソースルーターにテンプレート API を追加する。ナビゲーションを増やす場合に限り `src/plugin.json` を変更する。
 
 ### Phase 2: テンプレート管理
 
@@ -113,7 +115,7 @@ Grafana のアプリ画面から、繰り返し使う EventBridge イベント�
 
 ### Phase 4: EventBridge 送信
 
-- AWS SDK for Go v2 の EventBridge クライアントを追加する。
+- AWS SDK for Go v2 の EventBridge クライアントを追加し、既存の `awsConfigs` による認証設定を使う。`PutEvents` の再試行は `aws.NopRetryer` で無効にする。
 - `/templates/{id}/execute` を実装し、認証、認可、検証、PutEvents、部分失敗の応答をまとめる。
 - 実行前確認、送信中状態、成功・部分失敗・失敗表示を追加する。
 
@@ -125,7 +127,7 @@ Grafana のアプリ画面から、繰り返し使う EventBridge イベント�
 
 ### Phase 6: 品質確認と配布
 
-- Go の単体テストでテンプレート検証、Detail の生成、PutEvents の成功・部分失敗を確認する。
+- Go の単体テストでテンプレート検証、Detail の生成、PutEvents の成功・部分失敗を確認し、再試行可能な失敗でも API 呼び出しが1回に留まることを確認する。
 - フロントエンドテストでフォーム生成、入力検証、プレビュー、結果表示を確認する。
 - 既存の `@grafana/plugin-e2e` を使い、テンプレート作成から送信結果表示までの主要フローを検証する。
 - Grafana のバージョン要件、IAM ポリシー例、AWS 側の事前準備、テンプレート JSON 形式を README に記載する。
@@ -136,7 +138,7 @@ Grafana のアプリ画面から、繰り返し使う EventBridge イベント�
 2. テンプレートごとに EventBridge のリージョン、イベントバス、Source、Detail type、固定 Detail、入力項目を管理できる。
 3. 実行画面で入力フォームと最終 JSON を確認してから送信できる。
 4. AWS 認証情報をブラウザーへ渡さず、サーバー側 IAM 権限で PutEvents できる。
-5. EventBridge の部分失敗を含む応答を正しく表示し、意図しない自動再送をしない。
+5. EventBridge の部分失敗を含む応答を正しく表示し、SDK 内部を含めて意図しない自動再送をしない。
 6. テンプレートが Grafana 再起動や画面再読み込み後も保持され、org 間で混ざらない。
 
 ## 9. Grafana 固有の注意
