@@ -1,4 +1,4 @@
-import { buildEventDetail } from './api';
+import { buildEventDetail, executionResponseFromError } from './api';
 import { EventTemplate } from './types';
 
 describe('buildEventDetail', () => {
@@ -39,5 +39,28 @@ describe('buildEventDetail', () => {
     };
 
     expect(buildEventDetail(template, { comment: '' })).toEqual({ comment: '' });
+  });
+});
+
+describe('executionResponseFromError', () => {
+  test('preserves structured unknown delivery status from a failed request', () => {
+    expect(
+      executionResponseFromError({
+        data: {
+          status: 'unknown',
+          message: 'The event may have been accepted.',
+        },
+      })
+    ).toEqual({
+      status: 'unknown',
+      eventId: undefined,
+      errorCode: undefined,
+      errorMessage: undefined,
+      message: 'The event may have been accepted.',
+    });
+  });
+
+  test('ignores ordinary request errors', () => {
+    expect(executionResponseFromError({ data: { message: 'not found' } })).toBeUndefined();
   });
 });

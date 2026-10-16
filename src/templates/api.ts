@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
-import { EventTemplate, ExecutionResponse } from './types';
+import { EventTemplate, ExecutionResponse, ExecutionStatus } from './types';
 
 const templatesUrl = (pluginId: string) => `/api/plugins/${pluginId}/resources/templates`;
 
@@ -35,19 +35,47 @@ export function executeTemplate(
 }
 
 export function errorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const data = (error as { data?: { message?: string } | string }).data;
-    if (typeof data === 'string' && data.trim() !== '') {
-      return data;
-    }
-    if (typeof data === 'object' && data?.message) {
-      return data.message;
-    }
+  const data = errorData(error);
+  if (typeof data === 'string' && data.trim() !== '') {
+    return data;
+  }
+  if (isRecord(data) && typeof data.message === 'string' && data.message.trim() !== '') {
+    return data.message;
   }
   if (error instanceof Error && error.message) {
     return error.message;
   }
   return 'The template request failed';
+}
+
+export function executionResponseFromError(error: unknown): ExecutionResponse | undefined {
+  const data = errorData(error);
+  if (!isRecord(data) || !isExecutionStatus(data.status)) {
+    return undefined;
+  }
+
+  return {
+    status: data.status,
+    eventId: typeof data.eventId === 'string' ? data.eventId : undefined,
+    errorCode: typeof data.errorCode === 'string' ? data.errorCode : undefined,
+    errorMessage: typeof data.errorMessage === 'string' ? data.errorMessage : undefined,
+    message: typeof data.message === 'string' ? data.message : undefined,
+  };
+}
+
+function errorData(error: unknown): unknown {
+  if (typeof error === 'object' && error !== null && 'data' in error) {
+    return (error as { data?: unknown }).data;
+  }
+  return undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isExecutionStatus(value: unknown): value is ExecutionStatus {
+  return value === 'accepted' || value === 'failed' || value === 'unknown';
 }
 
 export function buildEventDetail(template: EventTemplate, values: Record<string, unknown>): Record<string, unknown> {

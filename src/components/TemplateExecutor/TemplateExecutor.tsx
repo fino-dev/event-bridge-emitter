@@ -1,7 +1,7 @@
 import { Alert, Badge, Button, Card, Field, FieldSet, Icon, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import pluginJson from '../../plugin.json';
-import { buildEventDetail, errorMessage, executeTemplate } from '../../templates/api';
+import { buildEventDetail, errorMessage, executeTemplate, executionResponseFromError } from '../../templates/api';
 import { EventTemplate } from '../../templates/types';
 import { ExecutionField } from './ExecutionField';
 import { getStyles } from './TemplateExecutor.styles';
@@ -35,7 +35,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
     return rawValues;
   });
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ severity: 'success' | 'error'; message: string }>();
+  const [result, setResult] = useState<{ severity: 'success' | 'warning' | 'error'; title: string; message: string }>();
   const preview = useMemo(() => JSON.stringify(buildEventDetail(template, values), null, 2), [template, values]);
 
   const setValue = (key: string, value: unknown) =>
@@ -55,11 +55,26 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
     try {
       const response = await executeTemplate(pluginJson.id, template.id, detailType, values);
       setResult({
-        severity: response.status === 'accepted' ? 'success' : 'error',
+        severity: response.status === 'accepted' ? 'success' : response.status === 'unknown' ? 'warning' : 'error',
+        title:
+          response.status === 'accepted'
+            ? 'Event accepted'
+            : response.status === 'unknown'
+              ? 'Delivery status unknown'
+              : 'Event rejected',
         message: response.message || response.errorMessage || response.status,
       });
     } catch (requestError) {
-      setResult({ severity: 'error', message: errorMessage(requestError) });
+      const response = executionResponseFromError(requestError);
+      if (response) {
+        setResult({
+          severity: response.status === 'unknown' ? 'warning' : 'error',
+          title: response.status === 'unknown' ? 'Delivery status unknown' : 'Event rejected',
+          message: response.message || response.errorMessage || response.status,
+        });
+      } else {
+        setResult({ severity: 'error', title: 'Event request failed', message: errorMessage(requestError) });
+      }
     } finally {
       setSending(false);
     }
@@ -135,10 +150,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
             <TextArea readOnly rows={16} value={preview} aria-label="Event JSON preview" />
           </div>
           {result && (
-            <Alert
-              severity={result.severity}
-              title={result.severity === 'success' ? 'Event accepted' : 'Event not accepted'}
-            >
+            <Alert severity={result.severity} title={result.title}>
               {result.message}
             </Alert>
           )}

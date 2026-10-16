@@ -9,30 +9,25 @@ apps:
       authType: default
       defaultRegion: ap-northeast-1
       templates:
-        - id: deploy-start
-          name: Start deployment
-          description: Send a deployment-start event with operator-provided values.
+        - id: ingest-yahoo-history
+          name: Ingest Yahoo history
+          description: Start Yahoo Finance history ingestion for the selected tickers.
           tags:
-            - deployment
+            - pipeline
+            - yahoo
+            - history
           target:
             region: ap-northeast-1
-            eventBusName: default
+            eventBusName: toshi-lab-dev-pipeline-bus
           event:
-            source: toshi-lab.deployments
-            detailType: DeploymentStarted
-            fixedDetail:
-              application: eventbridge-emitter
+            source: toshi-lab.pipeline
+            detailType: YahooHistoryIngest
+            fixedDetail: {}
             fields:
-              - key: deploymentId
-                label: Deployment ID
-                type: string
+              - key: tickers
+                label: Tickers
+                type: json
                 required: true
-              - key: environment
-                label: Environment
-                type: select
-                required: true
-                default: development
-                options:
-                  - development
-                  - staging
-                  - production
+                default:
+                  - AAPL
+                  - GOOG

@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
 	"github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
+	"github.com/aws/smithy-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -148,10 +150,8 @@ func (a *App) executeTemplate(w http.ResponseWriter, req *http.Request, reposito
 		}},
 	})
 	if err != nil {
-		writeJSON(w, http.StatusBadGateway, executionResponse{
-			Status:  "unknown",
-			Message: "EventBridge request failed; the event may have been accepted before the timeout. Check EventBridge before retrying.",
-		})
+		status, result := eventBridgeRequestError(err)
+		writeJSON(w, status, result)
 		return
 	}
 	if output.FailedEntryCount > 0 {
@@ -162,6 +162,7 @@ func (a *App) executeTemplate(w http.ResponseWriter, req *http.Request, reposito
 			result.ErrorCode = aws.ToString(entry.ErrorCode)
 			result.ErrorMessage = aws.ToString(entry.ErrorMessage)
 		}
+		result.Message = formatEventBridgeError(result.Message, result.ErrorCode, result.ErrorMessage)
 		writeJSON(w, http.StatusBadGateway, result)
 		return
 	}
@@ -170,6 +171,65 @@ func (a *App) executeTemplate(w http.ResponseWriter, req *http.Request, reposito
 		result.EventID = aws.ToString(output.Entries[0].EventId)
 	}
 	writeJSON(w, http.StatusOK, result)
+}
+
+// eventBridgeRequestError separates a definitive EventBridge rejection from a
+// transport failure where PutEvents may have reached EventBridge but its result
+// did not reach Grafana.
+func eventBridgeRequestError(err error) (int, executionResponse) {
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		code := strings.TrimSpace(apiErr.ErrorCode())
+		message := strings.TrimSpace(apiErr.ErrorMessage())
+		if message == "" {
+			message = strings.TrimSpace(err.Error())
+		}
+		return http.StatusBadGateway, executionResponse{
+			Status:       "failed",
+			ErrorCode:    code,
+			ErrorMessage: message,
+			Message:      formatEventBridgeError("EventBridge rejected the request", code, message),
+		}
+	}
+
+	if eventBridgeResultUnknown(err) {
+		status := http.StatusBadGateway
+		message := "The connection to EventBridge failed before the result was confirmed. The event may have been accepted. Check EventBridge before retrying."
+		if errors.Is(err, context.DeadlineExceeded) {
+			status = http.StatusGatewayTimeout
+			message = "EventBridge did not respond before the request timed out. The event may have been accepted. Check EventBridge before retrying."
+		}
+		return status, executionResponse{Status: "unknown", Message: message}
+	}
+
+	return http.StatusBadGateway, executionResponse{
+		Status:  "failed",
+		Message: fmt.Sprintf("Could not send the event to EventBridge: %s", err),
+	}
+}
+
+func eventBridgeResultUnknown(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+
+	var connectionError interface{ ConnectionError() bool }
+	return errors.As(err, &connectionError) && connectionError.ConnectionError()
+}
+
+func formatEventBridgeError(summary, code, message string) string {
+	code = strings.TrimSpace(code)
+	message = strings.TrimSpace(message)
+	switch {
+	case code != "" && message != "":
+		return fmt.Sprintf("%s (%s): %s", summary, code, message)
+	case code != "":
+		return fmt.Sprintf("%s (%s)", summary, code)
+	case message != "":
+		return fmt.Sprintf("%s: %s", summary, message)
+	default:
+		return summary
+	}
 }
 
 type templateRole string

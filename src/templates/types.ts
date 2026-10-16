@@ -30,8 +30,10 @@ export interface EventTemplate {
   event: TemplateEvent;
 }
 
+export type ExecutionStatus = 'accepted' | 'failed' | 'unknown';
+
 export interface ExecutionResponse {
-  status: 'accepted' | 'failed' | 'unknown';
+  status: ExecutionStatus;
   eventId?: string;
   errorCode?: string;
   errorMessage?: string;
