@@ -46,7 +46,7 @@ export function TemplateCard({ template, canExecute, onUse }: TemplateCardProps)
         </Card.Tags>
       )}
       {canExecute && (
-        <Card.Actions>
+        <Card.Actions className={styles.cardActions}>
           <Button icon="arrow-right" iconPlacement="right" onClick={() => onUse(template)}>
             Use template
           </Button>

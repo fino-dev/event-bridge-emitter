@@ -7,10 +7,15 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   sectionHeader: css({
     display: 'flex',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: theme.spacing(2),
     marginBottom: theme.spacing(2),
+  }),
+  sectionIntro: css({
+    flex: '1 1 420px',
+    minWidth: 0,
   }),
   sectionTitle: css({
     margin: 0,
@@ -22,14 +27,15 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
   }),
   resultCount: css({
+    flexShrink: 0,
     color: theme.colors.text.secondary,
     fontSize: theme.typography.bodySmall.fontSize,
     whiteSpace: 'nowrap',
   }),
   searchBar: css({
     display: 'flex',
-    alignItems: 'flex-end',
-    flexWrap: 'nowrap',
+    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1.5),
     marginBottom: theme.spacing(2),
@@ -41,8 +47,14 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   searchInput: css({
-    flex: 1,
+    flex: '1 1 320px',
     minWidth: 0,
+  }),
+  searchBarButton: css({
+    flexShrink: 0,
+    '@media (max-width: 520px)': {
+      width: '100%',
+    },
   }),
   loadingState: css({
     minHeight: 160,
@@ -61,31 +73,36 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   templateList: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
     gap: theme.spacing(2),
     alignItems: 'stretch',
   }),
   templateCard: css({
+    minWidth: 0,
     height: '100%',
     '&:hover': {
       boxShadow: theme.shadows.z1,
     },
   }),
   cardTitle: css({
+    display: '-webkit-box',
     overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 2,
+    overflowWrap: 'anywhere',
   }),
   cardMeta: css({
-    display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1.3fr) minmax(0, 1.5fr) minmax(64px, 0.6fr)',
-    gap: theme.spacing(2),
+    display: 'flex',
+    flexWrap: 'wrap',
+    columnGap: theme.spacing(3),
+    rowGap: theme.spacing(2),
     alignItems: 'start',
     marginTop: theme.spacing(2),
   }),
   detailItem: css({
     display: 'flex',
     flexDirection: 'column',
+    flex: '1 1 140px',
     minWidth: 0,
     gap: theme.spacing(0.5),
     overflowWrap: 'anywhere',
@@ -101,10 +118,14 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   cardTags: css({
     marginTop: theme.spacing(2),
   }),
+  cardActions: css({
+    display: 'flex',
+    justifyContent: 'flex-start',
+    marginTop: 'auto',
+  }),
   '@media (max-width: 800px)': {
     sectionHeader: {
-      alignItems: 'flex-start',
-      flexDirection: 'column',
+      gap: theme.spacing(1),
     },
   },
   '@media (max-width: 520px)': {
@@ -113,10 +134,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
       flexDirection: 'column',
     },
     searchInput: {
+      flexBasis: 'auto',
       width: '100%',
-    },
-    cardMeta: {
-      gridTemplateColumns: '1fr 1fr',
     },
   },
 });
