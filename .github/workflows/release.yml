@@ -19,6 +19,17 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Set plugin version from release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          npm version "${RELEASE_TAG#v}" --no-git-tag-version --allow-same-version
+
       - uses: grafana/plugin-actions/build-plugin@build-plugin/v1.2.0
         with:
           node-version: '22'
