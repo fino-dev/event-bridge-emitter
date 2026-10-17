@@ -1,3 +1,5 @@
+import { describe, expect, test } from 'vitest';
+
 import { buildEventDetail, executionResponseFromError } from './api';
 import { EventTemplate } from './types';
 

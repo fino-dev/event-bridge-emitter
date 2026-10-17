@@ -2,6 +2,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import '@testing-library/jest-dom/vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import AppConfig, { AppConfigProps } from './AppConfig';
 import { testIds } from 'components/testIds';
 
@@ -11,8 +13,8 @@ describe('Components/AppConfig', () => {
   const originalAssumeRole = config.awsAssumeRoleEnabled;
 
   beforeEach(() => {
-    jest.resetAllMocks();
-    jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
+    vi.resetAllMocks();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
       return { measureText: () => ({ width: 0 }) } as unknown as CanvasRenderingContext2D;
     });
     config.awsAllowedAuthProviders = ['default', 'keys', 'credentials'];
@@ -33,7 +35,7 @@ describe('Components/AppConfig', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     config.awsAllowedAuthProviders = originalProviders;
     config.awsAssumeRoleEnabled = originalAssumeRole;
   });
