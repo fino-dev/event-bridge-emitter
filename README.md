@@ -42,7 +42,7 @@ An accepted result means that EventBridge accepted the event. It does not mean t
 
 Before using the plugin, prepare the following:
 
-- Grafana `13.2.0` or later. The required version is declared in [`src/plugin.json`](src/plugin.json).
+- Grafana `13.2.0` or later. The required version is declared in [`src/plugin.json`](https://github.com/fino-dev/event-bridge-emitter/blob/main/src/plugin.json).
 - The AWS EventBridge event bus or buses that receive events.
 - Network access from the Grafana server to AWS STS and the configured EventBridge Region.
 - An AWS identity that can call `events:PutEvents` on each target event bus.
@@ -133,7 +133,7 @@ Templates are immutable at runtime and are managed through Grafana app provision
 
 ### Where to define a template
 
-Create or edit a YAML file in the provisioning directory mounted into the Grafana server, commonly `/etc/grafana/provisioning/plugins/`. The repository's local development example is [`provisioning/plugins/development-apps.yaml`](provisioning/plugins/development-apps.yaml).
+Create or edit a YAML file in the provisioning directory mounted into the Grafana server, commonly `/etc/grafana/provisioning/plugins/`. The repository's local development example is [`provisioning/plugins/development-apps.yaml`](https://github.com/fino-dev/event-bridge-emitter/blob/main/provisioning/plugins/development-apps.yaml).
 
 Add templates under the `jsonData.templates` property of the `toshilab-eventbridgeemitter-app` app. Provision the app for the Grafana organization where the templates should appear:
 
@@ -355,7 +355,7 @@ Start the local Grafana instance with Docker:
 npm run server
 ```
 
-The local instance loads [`provisioning/plugins/development-apps.yaml`](provisioning/plugins/development-apps.yaml). This file is for local development and E2E tests; it is not required for a normal plugin installation.
+The local instance loads [`provisioning/plugins/development-apps.yaml`](https://github.com/fino-dev/event-bridge-emitter/blob/main/provisioning/plugins/development-apps.yaml). This file is for local development and E2E tests; it is not required for a normal plugin installation.
 
 ### Verification commands
 
