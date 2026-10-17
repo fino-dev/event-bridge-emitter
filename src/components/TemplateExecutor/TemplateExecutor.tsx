@@ -133,7 +133,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
               </Stack>
             </FieldSet>
           </div>
-          <Card.Actions>
+          <Card.Actions className={styles.cardActions}>
             <Button icon="play" onClick={() => void send()} disabled={sending}>
               {sending ? 'Sending…' : 'Send event'}
             </Button>

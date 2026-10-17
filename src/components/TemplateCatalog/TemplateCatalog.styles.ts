@@ -78,6 +78,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'stretch',
   }),
   templateCard: css({
+    // Keep Card content in one vertical flow when Grafana's refreshed Card
+    // grid has no Figure column.
+    '&&': {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+    },
     minWidth: 0,
     height: '100%',
     '&:hover': {
