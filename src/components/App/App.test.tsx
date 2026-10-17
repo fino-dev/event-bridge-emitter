@@ -4,30 +4,16 @@ import { AppRootProps, PluginType } from '@grafana/data';
 import { render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { listTemplates } from '../../templates/api';
 import App from './App';
 
-vi.mock('@grafana/runtime', async () => {
-  const actual = await vi.importActual<typeof import('@grafana/runtime')>('@grafana/runtime');
-
-  return {
-    ...actual,
-    PluginPage: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  };
-});
-
-vi.mock('../../templates/api', () => ({
-  errorMessage: vi.fn(() => 'The template request failed'),
-  listTemplates: vi.fn(),
+vi.mock('../../pages/HomePage', () => ({
+  default: () => <h2>Available templates</h2>,
 }));
 
 describe('Components/App', () => {
   let props: AppRootProps;
 
   beforeEach(() => {
-    vi.resetAllMocks();
-    vi.mocked(listTemplates).mockResolvedValue([]);
-
     props = {
       basename: 'a/sample-app',
       meta: {
@@ -43,14 +29,14 @@ describe('Components/App', () => {
     } as unknown as AppRootProps;
   });
 
-  test('renders the EventBridge template catalog', async () => {
+  test('renders the EventBridge template catalog route', async () => {
     const { queryByRole } = render(
       <MemoryRouter>
         <App {...props} />
       </MemoryRouter>
     );
 
-    // Application is lazy loaded, so we need to wait for the component and routes to be rendered
+    // App lazy-loads the page module, so wait for the route element to render.
     await waitFor(() => expect(queryByRole('heading', { name: 'Available templates' })).toBeInTheDocument(), {
       timeout: 2000,
     });
