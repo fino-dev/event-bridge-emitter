@@ -7,6 +7,15 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { listTemplates } from '../../templates/api';
 import App from './App';
 
+vi.mock('@grafana/runtime', async () => {
+  const actual = await vi.importActual<typeof import('@grafana/runtime')>('@grafana/runtime');
+
+  return {
+    ...actual,
+    PluginPage: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
+
 vi.mock('../../templates/api', () => ({
   errorMessage: vi.fn(() => 'The template request failed'),
   listTemplates: vi.fn(),
