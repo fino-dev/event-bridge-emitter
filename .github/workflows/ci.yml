@@ -170,7 +170,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dev dependencies
-        run: npm ci
+        run: npm install --package-lock=true --ignore-scripts
 
       - name: Start Grafana
         run: |
