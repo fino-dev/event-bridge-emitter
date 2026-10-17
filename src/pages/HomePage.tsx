@@ -11,7 +11,8 @@ import { getStyles } from './HomePage.styles';
 
 function HomePage() {
   const styles = useStyles2(getStyles);
-  const canExecuteTemplates = config.bootData.user.orgRole === 'Editor' || config.bootData.user.orgRole === 'Admin';
+  const orgRole = config.bootData?.user?.orgRole;
+  const canExecuteTemplates = orgRole === 'Editor' || orgRole === 'Admin';
   const [templates, setTemplates] = useState<EventTemplate[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);

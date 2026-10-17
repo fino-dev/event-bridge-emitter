@@ -52,6 +52,16 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'start',
   }),
   executorCard: css({
+    // Grafana's refreshed Card uses a named grid with an optional Figure
+    // column. These cards do not have a Figure, so keep their content in a
+    // predictable vertical flow instead of letting children auto-place into
+    // the empty column.
+    '&&': {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+    },
+    minWidth: 0,
     height: '100%',
   }),
   formBody: css({
@@ -61,13 +71,23 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(2),
   }),
   previewBody: css({
+    display: 'flex',
+    flex: '1 1 auto',
+    flexDirection: 'column',
+    minWidth: 0,
     marginTop: theme.spacing(2),
     '& textarea': {
+      width: '100%',
+      flex: '1 1 auto',
+      boxSizing: 'border-box',
       minHeight: 360,
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: 1.5,
     },
+  }),
+  cardActions: css({
+    marginTop: 'auto',
   }),
   '@media (max-width: 800px)': {
     executorHeader: {

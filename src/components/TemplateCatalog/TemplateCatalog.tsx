@@ -28,7 +28,7 @@ export function TemplateCatalog({
   return (
     <section className={styles.section} aria-labelledby="templates-heading">
       <div className={styles.sectionHeader}>
-        <div>
+        <div className={styles.sectionIntro}>
           <h2 id="templates-heading" className={styles.sectionTitle}>
             Available templates
           </h2>
@@ -58,7 +58,7 @@ export function TemplateCatalog({
             }}
           />
         </div>
-        <Button icon="search" onClick={onSearch}>
+        <Button className={styles.searchBarButton} icon="search" onClick={onSearch}>
           Search
         </Button>
       </div>
