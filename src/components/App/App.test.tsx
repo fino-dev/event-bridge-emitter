@@ -2,20 +2,22 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRootProps, PluginType } from '@grafana/data';
 import { render, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { listTemplates } from '../../templates/api';
 import App from './App';
 
-jest.mock('../../templates/api', () => ({
-  errorMessage: jest.fn(() => 'The template request failed'),
-  listTemplates: jest.fn(),
+vi.mock('../../templates/api', () => ({
+  errorMessage: vi.fn(() => 'The template request failed'),
+  listTemplates: vi.fn(),
 }));
 
 describe('Components/App', () => {
   let props: AppRootProps;
 
   beforeEach(() => {
-    jest.resetAllMocks();
-    jest.mocked(listTemplates).mockResolvedValue([]);
+    vi.resetAllMocks();
+    vi.mocked(listTemplates).mockResolvedValue([]);
 
     props = {
       basename: 'a/sample-app',
@@ -28,7 +30,7 @@ describe('Components/App', () => {
       },
       query: {},
       path: '',
-      onNavChanged: jest.fn(),
+      onNavChanged: vi.fn(),
     } as unknown as AppRootProps;
   });
 
