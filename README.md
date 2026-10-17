@@ -137,13 +137,13 @@ Templates are immutable at runtime and are managed through Grafana app provision
 
 Create or edit a YAML file in the provisioning directory mounted into the Grafana server, commonly `/etc/grafana/provisioning/plugins/`. The repository's local development example is [`provisioning/plugins/development-apps.yaml`](https://github.com/fino-dev/event-bridge-emitter/blob/main/provisioning/plugins/development-apps.yaml).
 
-Add templates under the `jsonData.templates` property of the `fno-eventbridgeemitter-app` app. Provision the app for the Grafana organization where the templates should appear:
+Add templates under the `jsonData.templates` property of the `fino-eventbridgeemitter-app` app. Provision the app for the Grafana organization where the templates should appear:
 
 ```yaml
 apiVersion: 1
 
 apps:
-  - type: fno-eventbridgeemitter-app
+  - type: fino-eventbridgeemitter-app
     org_id: 1
     disabled: false
     jsonData:
@@ -304,7 +304,7 @@ With `runDate: "2026-10-17"`, the EventBridge request contains:
 
 Check all of the following:
 
-1. The provisioning entry uses the exact app type `fno-eventbridgeemitter-app`.
+1. The provisioning entry uses the exact app type `fino-eventbridgeemitter-app`.
 2. The provisioning file is mounted in the Grafana server's configured provisioning directory.
 3. `org_id` matches the organization where the plugin is being opened.
 4. The app is not disabled and the YAML is valid.
