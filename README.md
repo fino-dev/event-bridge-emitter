@@ -1,6 +1,8 @@
-# AWS EventBridge Emitter
+# Grafana AWS EventBridge Emitter Plugin
 
-AWS EventBridge Emitter is a Grafana app plugin for sending repeatable Amazon EventBridge events from Grafana. Administrators configure the AWS identity and provision event templates; users select a template, enter its dynamic values, review the resulting event detail, and send one event through the Grafana backend.
+AWS EventBridge Emitter is a Grafana app plugin for sending repeatable Amazon EventBridge events from Grafana. 
+
+Administrators configure the AWS identity and provision event templates; users select a template, enter its dynamic values, review the resulting event detail, and send one event through the Grafana backend.
 
 ## Contents
 
