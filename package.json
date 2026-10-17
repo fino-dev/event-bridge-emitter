@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache .",
     "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
+    "sign": "npx --yes @grafana/sign-plugin@latest",
     "ci:frontend": "npm run typecheck && npm run lint && npm run test:ci && npm run build",
     "ci": "sh ./scripts/run-ci.sh",
     "setup:hooks": "sh ./scripts/setup-git-hooks.sh",
