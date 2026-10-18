@@ -16,9 +16,12 @@ Administrators configure the AWS identity and provision event templates; users s
 - [Troubleshooting](#troubleshooting)
 - [Contributor guide](#contributor-guide)
 
+
+
 ## Overview
 
 The plugin separates template administration from event execution:
+
 
 | Responsibility                                              | Where it happens                  | Who performs it          |
 | ----------------------------------------------------------- | --------------------------------- | ------------------------ |
@@ -26,6 +29,7 @@ The plugin separates template administration from event execution:
 | Define event destinations, fixed values, and form fields    | Grafana app provisioning          | Grafana operator/Admin   |
 | Browse and search provisioned templates                     | **EventBridge Emitter** home page | Viewer, Editor, or Admin |
 | Enter values, preview the event, and send it                | Template execution screen         | Editor or Admin          |
+
 
 The browser never calls AWS and never receives AWS credentials. The plugin backend uses the configured AWS identity to call EventBridge `PutEvents`.
 
@@ -44,7 +48,7 @@ An accepted result means that EventBridge accepted the event. It does not mean t
 
 Before using the plugin, prepare the following:
 
-- Grafana `13.2.0` or later. The required version is declared in [`src/plugin.json`](https://github.com/fino-dev/event-bridge-emitter/blob/main/src/plugin.json).
+- Grafana `13.2.0` or later. The required version is declared in `[src/plugin.json](https://github.com/fino-dev/event-bridge-emitter/blob/main/src/plugin.json)`.
 - The AWS EventBridge event bus or buses that receive events.
 - Network access from the Grafana server to AWS STS and the configured EventBridge Region.
 - An AWS identity that can call `events:PutEvents` on each target event bus.
@@ -52,11 +56,13 @@ Before using the plugin, prepare the following:
 
 Grafana organization roles are enforced by the backend:
 
+
 | Grafana role | Browse templates | Execute events | Configure the plugin |
 | ------------ | ---------------- | -------------- | -------------------- |
 | Viewer       | Yes              | No             | No                   |
 | Editor       | Yes              | Yes            | No                   |
 | Admin        | Yes              | Yes            | Yes                  |
+
 
 Use the narrowest IAM policy possible. For a bus named `operations` in `ap-northeast-1`, the relevant permission is:
 
@@ -90,11 +96,15 @@ If the template list is empty, start with the [Troubleshooting](#troubleshooting
 
 The plugin creates AWS SDK configuration on the Grafana server. Choose the method that matches how the Grafana service obtains credentials.
 
+
 | Method                  | Use when                                                                                                                     | Important detail                                                                                                           |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **AWS SDK Default**     | Grafana runs with an EC2/ECS/EKS workload role, environment credentials, shared profile, or another standard AWS SDK source. | The credential provider chain is resolved by the Grafana service, not by the user's browser.                               |
 | **Credentials file**    | Grafana must use a named profile from an AWS shared credentials file.                                                        | The file and profile must exist on the Grafana server. A profile on the operator's workstation is not used.                |
 | **Access & secret key** | Grafana receives an explicit access key pair from a secret-management process.                                               | Grafana stores the secret key as encrypted plugin configuration. Rotate keys and do not commit them to provisioning files. |
+
+
+
 
 ### Configure authentication
 
@@ -129,13 +139,15 @@ Assume Role is an additional setting, not a fourth authentication provider. Use 
 4. Enter **External ID** only when the target role's trust policy requires it. External ID has no effect without an Assume Role ARN.
 5. Save and test again, then confirm that the returned ARN is the assumed role.
 
+
+
 ## Create and configure templates
 
 Templates are immutable at runtime and are managed through Grafana app provisioning. The home page and resource API do not support template create, edit, duplicate, import, or delete operations.
 
 ### Where to define a template
 
-Create or edit a YAML file in the provisioning directory mounted into the Grafana server, commonly `/etc/grafana/provisioning/plugins/`. The repository's local development example is [`provisioning/plugins/development-apps.yaml`](https://github.com/fino-dev/event-bridge-emitter/blob/main/provisioning/plugins/development-apps.yaml).
+Create or edit a YAML file in the provisioning directory mounted into the Grafana server, commonly `/etc/grafana/provisioning/plugins/`. The repository's local development example is `[provisioning/plugins/development-apps.yaml](https://github.com/fino-dev/event-bridge-emitter/blob/main/provisioning/plugins/development-apps.yaml)`.
 
 Add templates under the `jsonData.templates` property of the `fino-eventbridgeemitter-app` app. Provision the app for the Grafana organization where the templates should appear:
 
@@ -200,6 +212,7 @@ After changing provisioning, restart Grafana or use the provisioning reload proc
 
 ### Template properties
 
+
 | Property              | Required | Description and constraints                                                                                            |
 | --------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `id`                  | Yes      | Stable unique identifier used by the execution API. IDs must be unique within the provisioned app instance.            |
@@ -213,11 +226,13 @@ After changing provisioning, restart Grafana or use the provisioning reload proc
 | `event.fixedDetail`   | Yes      | JSON object merged into every event's `Detail`. Use `{}` when there are no fixed values.                               |
 | `event.fields`        | No       | Dynamic fields displayed in the execution form. Maximum 100 fields.                                                    |
 
+
 Use different keys for `fixedDetail` and dynamic fields. If a dynamic field has the same key as a fixed value, the dynamic value replaces the fixed value when the event is built.
 
 ### Dynamic field properties
 
 Each item in `event.fields` supports:
+
 
 | Property   | Required          | Description                                                                                                                                                          |
 | ---------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -228,7 +243,11 @@ Each item in `event.fields` supports:
 | `default`  | No                | Initial form value and fallback when the user leaves the field unset. It must match the declared type.                                                               |
 | `options`  | Only for `select` | Non-empty list of unique, non-empty strings. The submitted value must match one of these options.                                                                    |
 
+
+
+
 ### Supported field types
+
 
 | Type      | Grafana control       | Accepted value                                                            | Example                     |
 | --------- | --------------------- | ------------------------------------------------------------------------- | --------------------------- |
@@ -237,6 +256,7 @@ Each item in `event.fields` supports:
 | `boolean` | Checkbox              | JSON boolean                                                              | `true`                      |
 | `select`  | Select/combobox       | One string from `options`                                                 | `"production"`              |
 | `json`    | Multiline JSON editor | Any valid, non-null JSON value: object, array, string, number, or boolean | `{ "source": "scheduled" }` |
+
 
 The `json` type is a JSON value editor, not a JSON Schema editor. Enter syntactically valid JSON. A required string must not be blank, numbers must be finite, and a `select` value must be one of its configured options. These checks are repeated by the backend; frontend validation alone is not trusted.
 
@@ -282,11 +302,15 @@ With `runDate: "2026-10-17"`, the EventBridge request contains:
 
 ### Execution results
 
+
 | Result       | Meaning                                                                                              | Recommended action                                                                 |
 | ------------ | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | **Accepted** | EventBridge accepted the event and may return an Event ID.                                           | Treat downstream processing as asynchronous; verify the target separately.         |
 | **Failed**   | EventBridge definitively rejected the request or an entry.                                           | Fix the reported validation/IAM/event bus error and submit again.                  |
 | **Unknown**  | The connection failed before Grafana confirmed the result. The event may already have been accepted. | Check EventBridge or downstream observability before retrying to avoid duplicates. |
+
+
+
 
 ## Security and delivery behavior
 
@@ -298,7 +322,11 @@ With `runDate: "2026-10-17"`, the EventBridge request contains:
 - The plugin disables AWS SDK retries for `PutEvents`. A network timeout can therefore produce an **Unknown** result even if EventBridge received the event; retry only after checking for duplicates.
 - Avoid putting sensitive values in fixed details or defaults. They are included in the execution screen's preview and may be visible to users who can execute the template.
 
+
+
 ## Troubleshooting
+
+
 
 ### No templates are displayed
 
@@ -311,6 +339,8 @@ Check all of the following:
 5. Grafana has been restarted or provisioning has been reloaded after the change.
 6. Grafana/plugin logs do not report duplicate IDs or invalid field definitions.
 
+
+
 ### Authentication test fails
 
 - Confirm that the Grafana server, not only your workstation, can reach AWS STS.
@@ -318,6 +348,8 @@ Check all of the following:
 - For Access & secret key, verify that both values are present and current.
 - For Credentials file, verify the mounted file path, permissions, and profile name.
 - For Assume Role, verify both `sts:AssumeRole` permission on the base identity and the trust policy on the target role.
+
+
 
 ### Execution is forbidden
 
@@ -332,6 +364,8 @@ Check the returned error code and message, then verify:
 - the event bus exists and the configured name/ARN is correct;
 - all required fields are provided and all `select` values are in `options`;
 - the JSON field is valid JSON and the final detail is within the EventBridge size limit.
+
+
 
 ### Delivery status is unknown
 
@@ -357,7 +391,7 @@ Start the local Grafana instance with Docker:
 npm run server
 ```
 
-The local instance loads [`provisioning/plugins/development-apps.yaml`](https://github.com/fino-dev/event-bridge-emitter/blob/main/provisioning/plugins/development-apps.yaml). This file is for local development and E2E tests; it is not required for a normal plugin installation.
+The local instance loads `[provisioning/plugins/development-apps.yaml](https://github.com/fino-dev/event-bridge-emitter/blob/main/provisioning/plugins/development-apps.yaml)`. This file is for local development and E2E tests; it is not required for a normal plugin installation.
 
 ### Verification commands
 

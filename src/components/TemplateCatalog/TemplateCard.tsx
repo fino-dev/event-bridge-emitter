@@ -24,18 +24,20 @@ export function TemplateCard({ template, canExecute, onUse }: TemplateCardProps)
         <div className={styles.detailItem}>
           <span className={styles.detailLabel}>Destination</span>
           <strong>
-            {template.target.region} / {template.target.eventBusName}
+            {template.target.region || '-'} / {template.target.eventBusName || '-'}
           </strong>
         </div>
         <div className={styles.detailItem}>
-          <span className={styles.detailLabel}>Event</span>
-          <strong>{template.event.source}</strong>
-          <span>{template.event.detailType}</span>
+          <span className={styles.detailLabel}>Event source</span>
+          <strong>{template.event.source || '-'}</strong>
+        </div>
+        <div className={styles.detailItem}>
+          <span className={styles.detailLabel}>Detail type</span>
+          <strong>{template.event.detailType || '-'}</strong>
         </div>
         <div className={styles.detailItem}>
           <span className={styles.detailLabel}>Fields</span>
           <strong>{fields.length}</strong>
-          <span>{fields.length === 1 ? 'input' : 'inputs'}</span>
         </div>
       </Card.Meta>
       {template.tags && template.tags.length > 0 && (
