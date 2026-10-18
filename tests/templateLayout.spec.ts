@@ -112,7 +112,7 @@ for (const width of [1280, 800, 390]) {
     await expect(page).toHaveURL(new RegExp(`${templatePath(fullTemplate.id)}$`));
     await expect(page.getByRole('heading', { name: pluginJson.name, exact: true })).toBeVisible();
     const executor = page.getByRole('region', { name: `Use ${fullTemplate.name}` });
-    const fields = executor.getByRole('group', { name: 'Template fields' });
+    const fields = executor.getByRole('group', { name: 'Detail fields' });
     for (const type of ['string', 'number', 'boolean', 'select', 'json']) {
       await expect(fields.getByText(type, { exact: true })).toBeVisible();
     }
@@ -195,14 +195,14 @@ test('direct links support missing, fixed-only and many-field templates', async 
 
   await gotoPage(`/templates/${fixedTemplate.id}`);
   await expect(page.getByRole('heading', { name: `Use ${fixedTemplate.name}`, exact: true })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Template fields' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Detail fields' })).toHaveCount(0);
   await expect(page.getByRole('textbox', { name: 'Event JSON preview' })).toHaveValue(/"fixed": true/);
   await page.getByRole('button', { name: 'Copy AWS CLI command', exact: true }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('\\"fixed\\":true');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await gotoPage(`/templates/${manyFieldsTemplate.id}`);
-  await expect(page.getByRole('group', { name: 'Template fields' }).getByRole('textbox')).toHaveCount(20);
+  await expect(page.getByRole('group', { name: 'Detail fields' }).getByRole('textbox')).toHaveCount(20);
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`${homePath}$`));
 });

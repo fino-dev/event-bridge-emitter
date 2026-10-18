@@ -137,7 +137,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
               <Input value={detailType} onChange={(event) => setDetailType(event.currentTarget.value)} />
             </Field>
             {fields.length > 0 && (
-              <FieldSet label="Template fields" className={styles.fieldSet}>
+              <FieldSet label="Detail fields" className={styles.fieldSet}>
                 <div className={styles.fields}>
                   {fields.map((field) => (
                     <ExecutionField
