@@ -38,7 +38,7 @@ function HomePage() {
 
   return (
     <PluginPage>
-      <main className={styles.page} data-testid={testIds.homePage.container}>
+      <main className={styles.root} data-testid={testIds.homePage.container}>
         {error && (
           <Alert
             severity="error"

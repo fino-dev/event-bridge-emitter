@@ -1,6 +1,4 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, FieldSet, useStyles2 } from '@grafana/ui';
 import { testIds } from '../testIds';
 import { AssumeRoleFields } from './fields/AssumeRoleFields';
@@ -8,6 +6,7 @@ import { AuthCredentialFields } from './fields/AuthCredentialFields';
 import { AuthenticationProviderField } from './fields/AuthenticationProviderField';
 import { DefaultRegionField } from './fields/DefaultRegionField';
 import { useAwsAuthSettings } from './useAwsAuthSettings';
+import { getStyles } from './AwsAuthForm.styles';
 
 type AwsAuthFormProps = ReturnType<typeof useAwsAuthSettings>;
 
@@ -49,13 +48,13 @@ export function AwsAuthForm({
         {assumeRoleEnabled && (
           <AssumeRoleFields assumeRoleArn={state.assumeRoleArn} externalId={state.externalId} onChange={onChange} />
         )}
-        <DefaultRegionField className={styles.marginTop} value={state.defaultRegion} onChange={onChange} />
+        <DefaultRegionField className={styles.fieldSpacing} value={state.defaultRegion} onChange={onChange} />
         {result && (
           <Alert severity={result.severity} title={result.title} data-testid={testIds.appConfig.result}>
             {result.message}
           </Alert>
         )}
-        <div className={styles.marginTop}>
+        <div className={styles.fieldSpacing}>
           <Button type="submit" data-testid={testIds.appConfig.submit} disabled={isSubmitDisabled}>
             {saving ? 'Testing…' : 'Save and test'}
           </Button>
@@ -64,9 +63,3 @@ export function AwsAuthForm({
     </form>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  marginTop: css`
-    margin-top: ${theme.spacing(3)};
-  `,
-});

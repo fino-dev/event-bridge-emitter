@@ -1,7 +1,13 @@
 import { Alert, Badge, Button, Card, Field, FieldSet, Icon, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import pluginJson from '../../plugin.json';
-import { buildEventDetail, errorMessage, executeTemplate, executionResponseFromError, templateFields } from '../../templates/api';
+import {
+  buildEventDetail,
+  errorMessage,
+  executeTemplate,
+  executionResponseFromError,
+  templateFields,
+} from '../../templates/api';
 import { EventTemplate } from '../../templates/types';
 import { ExecutionField } from './ExecutionField';
 import { getStyles } from './TemplateExecutor.styles';
@@ -82,21 +88,21 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
   };
 
   return (
-    <section className={styles.executor} aria-labelledby="executor-heading">
-      <div className={styles.executorHeader}>
+    <section className={styles.root} aria-labelledby="executor-heading">
+      <div className={styles.header}>
         <div>
           <Button variant="secondary" fill="text" icon="arrow-left" onClick={onCancel}>
             Back to templates
           </Button>
-          <div className={styles.executorTitleGroup}>
+          <div className={styles.titleGroup}>
             <div className={styles.eyebrow}>
               <Icon name="play" size="sm" />
               Event execution
             </div>
-            <h2 id="executor-heading" className={styles.executorTitle}>
+            <h2 id="executor-heading" className={styles.title}>
               Use {template.name}
             </h2>
-            <p className={styles.sectionDescription}>
+            <p className={styles.description}>
               Values below are applied at send time. The template itself is managed through provisioning.
             </p>
           </div>
@@ -111,8 +117,8 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
         </span>
       </div>
 
-      <div className={styles.executorGrid}>
-        <Card className={styles.executorCard} noMargin>
+      <div className={styles.grid}>
+        <Card className={styles.card} noMargin>
           <Card.Heading>Event values</Card.Heading>
           <Card.Description>Customize the provided fields before sending this event.</Card.Description>
           <div className={styles.formBody}>
@@ -134,7 +140,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
               </Stack>
             </FieldSet>
           </div>
-          <Card.Actions className={styles.cardActions}>
+          <Card.Actions className={styles.actions}>
             <Button icon="play" onClick={() => void send()} disabled={sending}>
               {sending ? 'Sending…' : 'Send event'}
             </Button>
@@ -144,7 +150,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
           </Card.Actions>
         </Card>
 
-        <Card className={styles.executorCard} noMargin>
+        <Card className={styles.card} noMargin>
           <Card.Heading>Event preview</Card.Heading>
           <Card.Description>Review the detail payload that will be sent to EventBridge.</Card.Description>
           <div className={styles.previewBody}>

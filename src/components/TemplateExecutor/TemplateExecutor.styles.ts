@@ -2,17 +2,17 @@ import { css } from '@emotion/css';
 import type { GrafanaTheme2 } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  executor: css({
+  root: css({
     minWidth: 0,
   }),
-  executorHeader: css({
+  header: css({
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: theme.spacing(3),
     marginBottom: theme.spacing(3),
   }),
-  executorTitleGroup: css({
+  titleGroup: css({
     marginTop: theme.spacing(3),
   }),
   eyebrow: css({
@@ -25,12 +25,12 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     letterSpacing: '0.04em',
     textTransform: 'uppercase',
   }),
-  executorTitle: css({
+  title: css({
     margin: theme.spacing(1, 0, 0),
     fontSize: theme.typography.h2.fontSize,
     lineHeight: 1.3,
   }),
-  sectionDescription: css({
+  description: css({
     margin: theme.spacing(0.75, 0, 0),
     color: theme.colors.text.secondary,
   }),
@@ -45,13 +45,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     borderLeft: `3px solid ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.default,
   }),
-  executorGrid: css({
+  grid: css({
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 1.1fr) minmax(320px, 0.9fr)',
     gap: theme.spacing(2),
     alignItems: 'start',
   }),
-  executorCard: css({
+  card: css({
     // Grafana's refreshed Card uses a named grid with an optional Figure
     // column. These cards do not have a Figure, so keep their content in a
     // predictable vertical flow instead of letting children auto-place into
@@ -86,14 +86,14 @@ export const getStyles = (theme: GrafanaTheme2) => ({
       lineHeight: 1.5,
     },
   }),
-  cardActions: css({
+  actions: css({
     marginTop: 'auto',
   }),
   '@media (max-width: 800px)': {
-    executorHeader: {
+    header: {
       flexDirection: 'column',
     },
-    executorGrid: {
+    grid: {
       gridTemplateColumns: '1fr',
     },
   },

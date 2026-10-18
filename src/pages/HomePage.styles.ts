@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import type { GrafanaTheme2 } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  page: css({
+  root: css({
     width: '100%',
     maxWidth: 1200,
     boxSizing: 'border-box',
@@ -10,7 +10,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(3, 2, 6),
   }),
   '@media (max-width: 520px)': {
-    page: {
+    root: {
       padding: theme.spacing(2, 1, 4),
     },
   },
