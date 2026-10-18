@@ -59,7 +59,8 @@ func (r *provisionedTemplateRepository) Get(_ context.Context, id string) (Templ
 func cloneTemplate(template Template) Template {
 	clone := template
 	clone.Tags = append([]string(nil), template.Tags...)
-	clone.Event.Fields = append([]TemplateField(nil), template.Event.Fields...)
+	clone.Event.Fields = make([]TemplateField, len(template.Event.Fields))
+	copy(clone.Event.Fields, template.Event.Fields)
 	clone.Event.FixedDetail = make(map[string]any, len(template.Event.FixedDetail))
 	for key, value := range template.Event.FixedDetail {
 		clone.Event.FixedDetail[key] = value

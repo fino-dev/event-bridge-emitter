@@ -18,7 +18,7 @@ export interface TemplateEvent {
   source: string;
   detailType: string;
   fixedDetail: Record<string, unknown>;
-  fields: TemplateField[];
+  fields?: TemplateField[];
 }
 
 export interface EventTemplate {

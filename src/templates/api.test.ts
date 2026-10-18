@@ -1,7 +1,21 @@
 import { describe, expect, test } from 'vitest';
 
-import { buildEventDetail, executionResponseFromError } from './api';
+import { buildEventDetail, executionResponseFromError, templateFields } from './api';
 import { EventTemplate } from './types';
+
+const templateWithoutFields: EventTemplate = {
+  id: 'iceberg-migration',
+  name: 'Iceberg migration',
+  target: {
+    region: 'ap-northeast-1',
+    eventBusName: 'operations',
+  },
+  event: {
+    source: 'company.iceberg',
+    detailType: 'MigrationRequested',
+    fixedDetail: { migration: 'iceberg' },
+  },
+};
 
 describe('buildEventDetail', () => {
   test('merges fixed details and preserves false and zero values', () => {
@@ -41,6 +55,16 @@ describe('buildEventDetail', () => {
     };
 
     expect(buildEventDetail(template, { comment: '' })).toEqual({ comment: '' });
+  });
+
+  test('builds the fixed event detail when a template omits fields', () => {
+    expect(buildEventDetail(templateWithoutFields, {})).toEqual({ migration: 'iceberg' });
+  });
+});
+
+describe('templateFields', () => {
+  test('treats an omitted fields response as an empty array', () => {
+    expect(templateFields(templateWithoutFields)).toEqual([]);
   });
 });
 

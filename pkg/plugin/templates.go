@@ -34,7 +34,7 @@ type TemplateEvent struct {
 	Source      string          `json:"source"`
 	DetailType  string          `json:"detailType"`
 	FixedDetail map[string]any  `json:"fixedDetail"`
-	Fields      []TemplateField `json:"fields,omitempty"`
+	Fields      []TemplateField `json:"fields"`
 }
 
 // TemplateField describes one dynamic value in an event detail.

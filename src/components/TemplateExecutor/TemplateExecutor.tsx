@@ -1,7 +1,7 @@
 import { Alert, Badge, Button, Card, Field, FieldSet, Icon, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import pluginJson from '../../plugin.json';
-import { buildEventDetail, errorMessage, executeTemplate, executionResponseFromError } from '../../templates/api';
+import { buildEventDetail, errorMessage, executeTemplate, executionResponseFromError, templateFields } from '../../templates/api';
 import { EventTemplate } from '../../templates/types';
 import { ExecutionField } from './ExecutionField';
 import { getStyles } from './TemplateExecutor.styles';
@@ -13,10 +13,11 @@ interface TemplateExecutorProps {
 
 export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) {
   const styles = useStyles2(getStyles);
+  const fields = templateFields(template);
   const [detailType, setDetailType] = useState(template.event.detailType);
   const [values, setValues] = useState<Record<string, unknown>>(() => {
     const defaults: Record<string, unknown> = {};
-    for (const field of template.event.fields) {
+    for (const field of fields) {
       if (field.default !== undefined) {
         defaults[field.key] = field.default;
       } else if (field.type === 'boolean' && field.required) {
@@ -27,7 +28,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
   });
   const [rawJSONValues, setRawJSONValues] = useState<Record<string, string>>(() => {
     const rawValues: Record<string, string> = {};
-    for (const field of template.event.fields) {
+    for (const field of fields) {
       if (field.type === 'json') {
         rawValues[field.key] = formatJSONValue(field.default);
       }
@@ -120,7 +121,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
             </Field>
             <FieldSet label="Template fields">
               <Stack direction="column" gap={2}>
-                {template.event.fields.map((field) => (
+                {fields.map((field) => (
                   <ExecutionField
                     key={field.key}
                     field={field}

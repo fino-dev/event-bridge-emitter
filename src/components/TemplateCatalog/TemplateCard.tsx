@@ -1,5 +1,6 @@
 import { Badge, Button, Card, Stack, useStyles2 } from '@grafana/ui';
 import React from 'react';
+import { templateFields } from '../../templates/api';
 import { EventTemplate } from '../../templates/types';
 import { getStyles } from './TemplateCatalog.styles';
 
@@ -11,6 +12,7 @@ interface TemplateCardProps {
 
 export function TemplateCard({ template, canExecute, onUse }: TemplateCardProps) {
   const styles = useStyles2(getStyles);
+  const fields = templateFields(template);
 
   return (
     <Card className={styles.templateCard} noMargin>
@@ -32,8 +34,8 @@ export function TemplateCard({ template, canExecute, onUse }: TemplateCardProps)
         </div>
         <div className={styles.detailItem}>
           <span className={styles.detailLabel}>Fields</span>
-          <strong>{template.event.fields.length}</strong>
-          <span>{template.event.fields.length === 1 ? 'input' : 'inputs'}</span>
+          <strong>{fields.length}</strong>
+          <span>{fields.length === 1 ? 'input' : 'inputs'}</span>
         </div>
       </Card.Meta>
       {template.tags && template.tags.length > 0 && (

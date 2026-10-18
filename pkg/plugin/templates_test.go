@@ -99,6 +99,43 @@ func TestProvisionedTemplateRepositoryIsReadOnlyAndSearchable(t *testing.T) {
 	}
 }
 
+func TestProvisionedTemplateRepositorySerializesEmptyFieldsAsArray(t *testing.T) {
+	for name, fields := range map[string][]TemplateField{
+		"empty":   {},
+		"omitted": nil,
+	} {
+		t.Run(name, func(t *testing.T) {
+			template := testTemplate()
+			template.Event.Fields = fields
+
+			repository, err := newProvisionedTemplateRepository([]Template{template})
+			if err != nil {
+				t.Fatalf("provision templates: %s", err)
+			}
+			stored, err := repository.Get(context.Background(), template.ID)
+			if err != nil {
+				t.Fatalf("get template: %s", err)
+			}
+			payload, err := json.Marshal(stored)
+			if err != nil {
+				t.Fatalf("marshal template: %s", err)
+			}
+
+			var response struct {
+				Event struct {
+					Fields json.RawMessage `json:"fields"`
+				} `json:"event"`
+			}
+			if err := json.Unmarshal(payload, &response); err != nil {
+				t.Fatalf("decode template: %s", err)
+			}
+			if string(response.Event.Fields) != "[]" {
+				t.Fatalf("fields = %s, want []", response.Event.Fields)
+			}
+		})
+	}
+}
+
 func TestProvisionedTemplateRepositoryRejectsDuplicateIDs(t *testing.T) {
 	if _, err := newProvisionedTemplateRepository([]Template{testTemplate(), testTemplate()}); err == nil || !strings.Contains(err.Error(), "duplicate") {
 		t.Fatalf("duplicate template error = %v", err)
