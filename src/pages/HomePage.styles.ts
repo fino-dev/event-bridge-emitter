@@ -8,10 +8,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     boxSizing: 'border-box',
     margin: '0 auto',
     padding: theme.spacing(3, 2, 6),
-  }),
-  '@media (max-width: 520px)': {
-    root: {
+    '@media (max-width: 520px)': {
       padding: theme.spacing(2, 1, 4),
     },
-  },
+  }),
 });

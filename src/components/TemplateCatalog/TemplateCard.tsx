@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Stack, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Card, useStyles2 } from '@grafana/ui';
 import React from 'react';
 import { templateFields } from '../../templates/api';
 import { EventTemplate } from '../../templates/types';
@@ -15,11 +15,13 @@ export function TemplateCard({ template, canExecute, onUse }: TemplateCardProps)
   const fields = templateFields(template);
 
   return (
-    <Card className={styles.card} noMargin>
+    <Card className={styles.card} noMargin role="article" aria-label={template.name}>
       <Card.Heading>
         <div className={styles.title}>{template.name}</div>
       </Card.Heading>
-      <Card.Description>{template.description || 'No description provided.'}</Card.Description>
+      <Card.Description className={styles.description}>
+        {template.description || 'No description provided.'}
+      </Card.Description>
       <Card.Meta className={styles.metadata} separator="">
         <div className={styles.detail}>
           <span className={styles.detailLabel}>Destination</span>
@@ -42,11 +44,9 @@ export function TemplateCard({ template, canExecute, onUse }: TemplateCardProps)
       </Card.Meta>
       {template.tags && template.tags.length > 0 && (
         <Card.Tags className={styles.tags}>
-          <Stack gap={1} wrap="wrap">
-            {template.tags.map((tag) => (
-              <Badge key={tag} color="darkgrey" text={tag} />
-            ))}
-          </Stack>
+          {template.tags.map((tag) => (
+            <Badge key={tag} className={styles.tag} color="darkgrey" text={tag} />
+          ))}
         </Card.Tags>
       )}
       {canExecute && (

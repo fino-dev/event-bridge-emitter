@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, Card, Field, FieldSet, Icon, Input, Stack, TextArea, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Card, Field, FieldSet, Icon, Input, TextArea, useStyles2 } from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import pluginJson from '../../plugin.json';
 import {
@@ -90,7 +90,7 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
   return (
     <section className={styles.root} aria-labelledby="executor-heading">
       <div className={styles.header}>
-        <div>
+        <div className={styles.introduction}>
           <Button variant="secondary" fill="text" icon="arrow-left" onClick={onCancel}>
             Back to templates
           </Button>
@@ -120,25 +120,29 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
       <div className={styles.grid}>
         <Card className={styles.card} noMargin>
           <Card.Heading>Event values</Card.Heading>
-          <Card.Description>Customize the provided fields before sending this event.</Card.Description>
+          <Card.Description className={styles.cardDescription}>
+            Customize the provided fields before sending this event.
+          </Card.Description>
           <div className={styles.formBody}>
-            <Field label="Detail type" description="Defaults to the value defined by the provisioned template">
+            <Field noMargin label="Detail type" description="Defaults to the value defined by the provisioned template">
               <Input value={detailType} onChange={(event) => setDetailType(event.currentTarget.value)} />
             </Field>
-            <FieldSet label="Template fields">
-              <Stack direction="column" gap={2}>
-                {fields.map((field) => (
-                  <ExecutionField
-                    key={field.key}
-                    field={field}
-                    value={values[field.key]}
-                    rawValue={rawJSONValues[field.key]}
-                    onRawChange={(rawValue) => setRawJSONValues((current) => ({ ...current, [field.key]: rawValue }))}
-                    onChange={(value) => setValue(field.key, value)}
-                  />
-                ))}
-              </Stack>
-            </FieldSet>
+            {fields.length > 0 && (
+              <FieldSet label="Template fields" className={styles.fieldSet}>
+                <div className={styles.fields}>
+                  {fields.map((field) => (
+                    <ExecutionField
+                      key={field.key}
+                      field={field}
+                      value={values[field.key]}
+                      rawValue={rawJSONValues[field.key]}
+                      onRawChange={(rawValue) => setRawJSONValues((current) => ({ ...current, [field.key]: rawValue }))}
+                      onChange={(value) => setValue(field.key, value)}
+                    />
+                  ))}
+                </div>
+              </FieldSet>
+            )}
           </div>
           <Card.Actions className={styles.actions}>
             <Button icon="play" onClick={() => void send()} disabled={sending}>
@@ -152,12 +156,14 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
 
         <Card className={styles.card} noMargin>
           <Card.Heading>Event preview</Card.Heading>
-          <Card.Description>Review the detail payload that will be sent to EventBridge.</Card.Description>
+          <Card.Description className={styles.cardDescription}>
+            Review the detail payload that will be sent to EventBridge.
+          </Card.Description>
           <div className={styles.previewBody}>
             <TextArea readOnly rows={16} value={preview} aria-label="Event JSON preview" />
           </div>
           {result && (
-            <Alert severity={result.severity} title={result.title}>
+            <Alert severity={result.severity} title={result.title} bottomSpacing={0}>
               {result.message}
             </Alert>
           )}

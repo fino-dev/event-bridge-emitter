@@ -1,6 +1,7 @@
-import { Checkbox, Combobox, Field, Input, TextArea } from '@grafana/ui';
-import React from 'react';
+import { Checkbox, Combobox, Field, Input, Label, TextArea, useStyles2 } from '@grafana/ui';
+import React, { useId } from 'react';
 import { TemplateField } from '../../templates/types';
+import { getStyles } from './ExecutionField.styles';
 
 interface ExecutionFieldProps {
   field: TemplateField;
@@ -11,18 +12,38 @@ interface ExecutionFieldProps {
 }
 
 export function ExecutionField({ field, value, rawValue, onRawChange, onChange }: ExecutionFieldProps) {
-  const label = `${field.label}${field.required ? ' *' : ''}`;
+  const styles = useStyles2(getStyles);
+  const id = useId();
+  const name = `${field.label}${field.required ? ' *' : ''}`;
+  const label = (
+    <span className={styles.label}>
+      <span className={styles.name}>{name}</span>
+      <span className={styles.type} aria-hidden="true">
+        {field.type}
+      </span>
+    </span>
+  );
+  const fieldLabel = <Label htmlFor={id}>{label}</Label>;
   if (field.type === 'boolean') {
     return (
-      <Checkbox label={label} checked={value === true} onChange={(event) => onChange(event.currentTarget.checked)} />
+      <div className={styles.checkbox}>
+        <Checkbox
+          id={id}
+          aria-label={name}
+          checked={value === true}
+          onChange={(event) => onChange(event.currentTarget.checked)}
+        />
+        {fieldLabel}
+      </div>
     );
   }
   if (field.type === 'select') {
     const options = (field.options || []).map((option) => ({ label: option, value: option }));
     return (
-      <Field label={label}>
+      <Field noMargin className={styles.root} label={fieldLabel}>
         <Combobox
-          aria-label={label}
+          id={id}
+          aria-label={name}
           options={options}
           value={typeof value === 'string' ? value : null}
           placeholder="Select an option"
@@ -33,8 +54,9 @@ export function ExecutionField({ field, value, rawValue, onRawChange, onChange }
   }
   if (field.type === 'json') {
     return (
-      <Field label={label}>
+      <Field noMargin className={styles.root} label={fieldLabel}>
         <TextArea
+          id={id}
           rows={5}
           value={rawValue ?? formatJSONValue(value)}
           onChange={(event) => {
@@ -51,8 +73,9 @@ export function ExecutionField({ field, value, rawValue, onRawChange, onChange }
     );
   }
   return (
-    <Field label={label}>
+    <Field noMargin className={styles.root} label={fieldLabel}>
       <Input
+        id={id}
         type={field.type === 'number' ? 'number' : 'text'}
         value={value === undefined ? '' : String(value)}
         onChange={(event) =>

@@ -3,6 +3,9 @@ import type { GrafanaTheme2 } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   root: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
     minWidth: 0,
   }),
   header: css({
@@ -11,7 +14,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: theme.spacing(2),
-    marginBottom: theme.spacing(2),
   }),
   intro: css({
     flex: '1 1 420px',
@@ -38,17 +40,21 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     flexWrap: 'wrap',
     gap: theme.spacing(1),
     padding: theme.spacing(1.5),
-    marginBottom: theme.spacing(2),
     background: theme.colors.background.secondary,
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
-    '& > button': {
-      flexShrink: 0,
+    '@media (max-width: 520px)': {
+      alignItems: 'stretch',
+      flexDirection: 'column',
     },
   }),
   searchInput: css({
     flex: '1 1 320px',
     minWidth: 0,
+    '@media (max-width: 520px)': {
+      flexBasis: 'auto',
+      width: '100%',
+    },
   }),
   searchButton: css({
     flexShrink: 0,
@@ -73,23 +79,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   list: css({
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 360px), 1fr))',
     gap: theme.spacing(2),
     alignItems: 'stretch',
   }),
-  '@media (max-width: 800px)': {
-    header: {
-      gap: theme.spacing(1),
-    },
-  },
-  '@media (max-width: 520px)': {
-    searchBar: {
-      alignItems: 'stretch',
-      flexDirection: 'column',
-    },
-    searchInput: {
-      flexBasis: 'auto',
-      width: '100%',
-    },
-  },
 });

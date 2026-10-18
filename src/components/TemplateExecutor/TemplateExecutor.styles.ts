@@ -3,14 +3,22 @@ import type { GrafanaTheme2 } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   root: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(3),
     minWidth: 0,
   }),
   header: css({
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: theme.spacing(3),
-    marginBottom: theme.spacing(3),
+    flexWrap: 'wrap',
+    gap: theme.spacing(2),
+  }),
+  introduction: css({
+    flex: '1 1 420px',
+    minWidth: 0,
+    overflowWrap: 'anywhere',
   }),
   titleGroup: css({
     marginTop: theme.spacing(3),
@@ -39,17 +47,23 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     padding: theme.spacing(1.5, 2),
-    marginBottom: theme.spacing(2),
     color: theme.colors.text.secondary,
     background: theme.colors.background.secondary,
     borderLeft: `3px solid ${theme.colors.primary.main}`,
     borderRadius: theme.shape.radius.default,
+    overflowWrap: 'anywhere',
+    '& > svg': {
+      flexShrink: 0,
+    },
+    '& > span': {
+      minWidth: 0,
+    },
   }),
   grid: css({
     display: 'grid',
-    gridTemplateColumns: 'minmax(0, 1.1fr) minmax(320px, 0.9fr)',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))',
     gap: theme.spacing(2),
-    alignItems: 'start',
+    alignItems: 'stretch',
   }),
   card: css({
     // Grafana's refreshed Card uses a named grid with an optional Figure
@@ -63,19 +77,31 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
     minWidth: 0,
     height: '100%',
+    gap: theme.spacing(2),
+    overflowWrap: 'anywhere',
+  }),
+  cardDescription: css({
+    margin: 0,
   }),
   formBody: css({
-    display: 'flex',
-    flexDirection: 'column',
+    display: 'grid',
     gap: theme.spacing(3),
-    marginTop: theme.spacing(2),
+    minWidth: 0,
+  }),
+  fieldSet: css({
+    minWidth: 0,
+    margin: 0,
+  }),
+  fields: css({
+    display: 'grid',
+    gap: theme.spacing(2),
+    minWidth: 0,
   }),
   previewBody: css({
     display: 'flex',
     flex: '1 1 auto',
     flexDirection: 'column',
     minWidth: 0,
-    marginTop: theme.spacing(2),
     '& textarea': {
       width: '100%',
       flex: '1 1 auto',
@@ -89,12 +115,4 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     marginTop: 'auto',
   }),
-  '@media (max-width: 800px)': {
-    header: {
-      flexDirection: 'column',
-    },
-    grid: {
-      gridTemplateColumns: '1fr',
-    },
-  },
 });

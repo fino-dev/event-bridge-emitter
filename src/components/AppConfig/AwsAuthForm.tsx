@@ -27,37 +27,44 @@ export function AwsAuthForm({
   const styles = useStyles2(getStyles);
 
   return (
-    <form onSubmit={onSubmit}>
-      <FieldSet label="AWS authentication">
-        <AuthenticationProviderField
-          providers={providers}
-          selectedProvider={selectedProvider}
-          onAuthTypeChange={onAuthTypeChange}
-        />
-        <AuthCredentialFields
-          authType={state.authType}
-          profile={state.profile}
-          accessKey={state.accessKey}
-          secretKey={state.secretKey}
-          isAccessKeySet={state.isAccessKeySet}
-          isSecretKeySet={state.isSecretKeySet}
-          onChange={onChange}
-          onResetAccessKey={onResetAccessKey}
-          onResetSecretKey={onResetSecretKey}
-        />
-        {assumeRoleEnabled && (
-          <AssumeRoleFields assumeRoleArn={state.assumeRoleArn} externalId={state.externalId} onChange={onChange} />
-        )}
-        <DefaultRegionField className={styles.fieldSpacing} value={state.defaultRegion} onChange={onChange} />
-        {result && (
-          <Alert severity={result.severity} title={result.title} data-testid={testIds.appConfig.result}>
-            {result.message}
-          </Alert>
-        )}
-        <div className={styles.fieldSpacing}>
-          <Button type="submit" data-testid={testIds.appConfig.submit} disabled={isSubmitDisabled}>
-            {saving ? 'Testing…' : 'Save and test'}
-          </Button>
+    <form className={styles.root} onSubmit={onSubmit}>
+      <FieldSet label="AWS authentication" className={styles.fieldSet}>
+        <div className={styles.fields}>
+          <AuthenticationProviderField
+            providers={providers}
+            selectedProvider={selectedProvider}
+            onAuthTypeChange={onAuthTypeChange}
+          />
+          <AuthCredentialFields
+            authType={state.authType}
+            profile={state.profile}
+            accessKey={state.accessKey}
+            secretKey={state.secretKey}
+            isAccessKeySet={state.isAccessKeySet}
+            isSecretKeySet={state.isSecretKeySet}
+            onChange={onChange}
+            onResetAccessKey={onResetAccessKey}
+            onResetSecretKey={onResetSecretKey}
+          />
+          {assumeRoleEnabled && (
+            <AssumeRoleFields assumeRoleArn={state.assumeRoleArn} externalId={state.externalId} onChange={onChange} />
+          )}
+          <DefaultRegionField value={state.defaultRegion} onChange={onChange} />
+          {result && (
+            <Alert
+              severity={result.severity}
+              title={result.title}
+              bottomSpacing={0}
+              data-testid={testIds.appConfig.result}
+            >
+              {result.message}
+            </Alert>
+          )}
+          <div>
+            <Button type="submit" data-testid={testIds.appConfig.submit} disabled={isSubmitDisabled}>
+              {saving ? 'Testing…' : 'Save and test'}
+            </Button>
+          </div>
         </div>
       </FieldSet>
     </form>
