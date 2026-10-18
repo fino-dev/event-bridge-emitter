@@ -14,7 +14,7 @@ const fullTemplate: EventTemplate = {
   event: {
     source: 'company.operations.'.repeat(8),
     detailType: 'OperationsRequested',
-    fixedDetail: {},
+    fixedDetail: { origin: 'provisioned' },
     fields: [
       { key: 'message', label: 'Message', type: 'string', required: true },
       { key: 'count', label: 'Count', type: 'number', required: false, default: 0 },
@@ -49,6 +49,18 @@ const manyFieldsTemplate: EventTemplate = {
 const templates = [fullTemplate, fixedTemplate, manyFieldsTemplate];
 
 async function mockTemplates(page: Page) {
+  await page.addInitScript(() => {
+    let copiedText = '';
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (text: string) => {
+          copiedText = text;
+        },
+        readText: async () => copiedText,
+      },
+    });
+  });
   await page.route(`**/api/plugins/${pluginJson.id}/resources/templates**`, async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.endsWith('/execute')) {
@@ -116,6 +128,31 @@ for (const width of [1280, 800, 390]) {
     await expect(preview).toHaveValue(/"enabled": true/);
     await expect(preview).toHaveValue(/"environment": "staging"/);
     await expect(preview).toHaveValue(/"nested": true/);
+    await executor.getByRole('textbox', { name: /^Detail type/ }).fill('CustomRequested');
+    expect(JSON.parse(await preview.inputValue())).toEqual({
+      region: fullTemplate.target.region,
+      eventBusName: fullTemplate.target.eventBusName,
+      source: fullTemplate.event.source,
+      detailType: 'CustomRequested',
+      detail: {
+        origin: 'provisioned',
+        message: 'hello',
+        count: 7,
+        enabled: true,
+        environment: 'staging',
+        payload: { nested: true },
+      },
+    });
+    const copyButton = executor.getByRole('button', { name: 'Copy AWS CLI command', exact: true });
+    await expect(copyButton).toHaveText('');
+    await copyButton.click();
+    const command = await page.evaluate(() => navigator.clipboard.readText());
+    expect(command).toMatch(/^aws events put-events/);
+    expect(command).toContain(`--region '${fullTemplate.target.region}'`);
+    expect(command).toContain(`"Source":"${fullTemplate.event.source}"`);
+    expect(command).toContain('"DetailType":"CustomRequested"');
+    expect(command).toContain('\\"origin\\":\\"provisioned\\"');
+    expect(command).toContain('\\"message\\":\\"hello\\"');
     expect(await executor.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
     const fieldBoxes = await fields.locator(':scope > div > *').evaluateAll((elements) =>
       elements.map((element) => {
@@ -160,12 +197,37 @@ test('direct links support missing, fixed-only and many-field templates', async 
   await expect(page.getByRole('heading', { name: `Use ${fixedTemplate.name}`, exact: true })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Template fields' })).toHaveCount(0);
   await expect(page.getByRole('textbox', { name: 'Event JSON preview' })).toHaveValue(/"fixed": true/);
+  await page.getByRole('button', { name: 'Copy AWS CLI command', exact: true }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('\\"fixed\\":true');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await gotoPage(`/templates/${manyFieldsTemplate.id}`);
   await expect(page.getByRole('group', { name: 'Template fields' }).getByRole('textbox')).toHaveCount(20);
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`${homePath}$`));
+});
+
+test('copying reports clipboard failure and can be retried', async ({ gotoPage, page }) => {
+  await mockTemplates(page);
+  await gotoPage(`/templates/${fixedTemplate.id}`);
+  const copyButton = page.getByRole('button', { name: 'Copy AWS CLI command', exact: true });
+  await expect(copyButton).toBeVisible();
+  await page.evaluate(() => {
+    const writeText = navigator.clipboard.writeText;
+    let attempts = 0;
+    navigator.clipboard.writeText = async (text: string) => {
+      if (attempts++ === 0) {
+        throw new Error('Clipboard access denied');
+      }
+      await writeText(text);
+    };
+  });
+  await copyButton.click();
+  const error = page.getByRole('alert', { name: 'Could not copy AWS CLI command', exact: true });
+  await expect(error).toBeVisible();
+  await copyButton.click();
+  await expect(error).toHaveCount(0);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/^aws events put-events/);
 });
 
 test('optional authentication fields keep their spacing on a narrow screen', async ({

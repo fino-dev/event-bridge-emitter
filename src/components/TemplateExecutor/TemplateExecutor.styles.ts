@@ -97,6 +97,16 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     minWidth: 0,
   }),
+  previewHeading: css({
+    '& > span': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      width: '100%',
+      minWidth: 0,
+    },
+  }),
   previewBody: css({
     display: 'flex',
     flex: '1 1 auto',

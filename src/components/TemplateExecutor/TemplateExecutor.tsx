@@ -1,14 +1,21 @@
-import { Alert, Badge, Button, Card, Field, FieldSet, Icon, Input, TextArea, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  ClipboardButton,
+  Field,
+  FieldSet,
+  Icon,
+  Input,
+  TextArea,
+  useStyles2,
+} from '@grafana/ui';
 import React, { useMemo, useState } from 'react';
 import pluginJson from '../../plugin.json';
-import {
-  buildEventDetail,
-  errorMessage,
-  executeTemplate,
-  executionResponseFromError,
-  templateFields,
-} from '../../templates/api';
+import { errorMessage, executeTemplate, executionResponseFromError, templateFields } from '../../templates/api';
 import { EventTemplate } from '../../templates/types';
+import { buildEventCommand, buildEventPreview } from '../../templates/preview';
 import { ExecutionField } from './ExecutionField';
 import { getStyles } from './TemplateExecutor.styles';
 
@@ -43,7 +50,9 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
   });
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ severity: 'success' | 'warning' | 'error'; title: string; message: string }>();
-  const preview = useMemo(() => JSON.stringify(buildEventDetail(template, values), null, 2), [template, values]);
+  const [copyError, setCopyError] = useState(false);
+  const eventPreview = useMemo(() => buildEventPreview(template, detailType, values), [template, detailType, values]);
+  const preview = JSON.stringify(eventPreview, null, 2);
 
   const setValue = (key: string, value: unknown) =>
     setValues((current) => {
@@ -155,13 +164,32 @@ export function TemplateExecutor({ template, onCancel }: TemplateExecutorProps) 
         </Card>
 
         <Card className={styles.card} noMargin>
-          <Card.Heading>Event preview</Card.Heading>
+          <Card.Heading className={styles.previewHeading}>
+            Event preview
+            <ClipboardButton
+              type="button"
+              icon="copy"
+              variant="secondary"
+              fill="text"
+              size="sm"
+              aria-label="Copy AWS CLI command"
+              tooltip="Copy AWS CLI command (bash/zsh)"
+              getText={() => buildEventCommand(eventPreview)}
+              onClipboardCopy={() => setCopyError(false)}
+              onClipboardError={() => setCopyError(true)}
+            />
+          </Card.Heading>
           <Card.Description className={styles.cardDescription}>
-            Review the detail payload that will be sent to EventBridge.
+            Review the full event and its destination. Copy an AWS CLI command for bash/zsh.
           </Card.Description>
           <div className={styles.previewBody}>
             <TextArea readOnly rows={16} value={preview} aria-label="Event JSON preview" />
           </div>
+          {copyError && (
+            <Alert severity="error" title="Could not copy AWS CLI command" bottomSpacing={0}>
+              Check clipboard permissions and try again.
+            </Alert>
+          )}
           {result && (
             <Alert severity={result.severity} title={result.title} bottomSpacing={0}>
               {result.message}
