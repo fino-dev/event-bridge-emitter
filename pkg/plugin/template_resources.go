@@ -47,6 +47,15 @@ func (a *App) handleTemplateCollection(w http.ResponseWriter, req *http.Request)
 		writeTemplateError(w, http.StatusServiceUnavailable, err)
 		return
 	}
+	if req.URL.Query().Has("id") {
+		template, err := repository.Get(req.Context(), req.URL.Query().Get("id"))
+		if err != nil {
+			writeTemplateRepositoryError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, template)
+		return
+	}
 	query := req.URL.Query().Get("q")
 	templates, err := repository.List(req.Context(), query)
 	if err != nil {
@@ -67,7 +76,13 @@ func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	id := segments[1]
-	if len(segments) == 3 && segments[2] == "execute" {
+	execute := len(segments) == 3 && segments[2] == "execute"
+	// A query parameter preserves IDs containing slashes after Grafana decodes the resource path.
+	if len(segments) == 2 && id == "execute" && req.URL.Query().Has("id") {
+		id = req.URL.Query().Get("id")
+		execute = true
+	}
+	if execute {
 		if !roleAtLeast(pluginCtx.User, roleEditor) {
 			writeTemplateError(w, http.StatusForbidden, errors.New("editor role is required"))
 			return
@@ -82,7 +97,7 @@ func (a *App) handleTemplateResource(w http.ResponseWriter, req *http.Request) {
 		writeTemplateError(w, http.StatusServiceUnavailable, err)
 		return
 	}
-	if len(segments) == 3 && segments[2] == "execute" {
+	if execute {
 		if req.Method != http.MethodPost {
 			w.Header().Set("Allow", http.MethodPost)
 			writeTemplateError(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))

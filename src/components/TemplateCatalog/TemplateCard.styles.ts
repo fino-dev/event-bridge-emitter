@@ -12,6 +12,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     },
     minWidth: 0,
     height: '100%',
+    gap: theme.spacing(2),
+    overflowWrap: 'anywhere',
     '&:hover': {
       boxShadow: theme.shadows.z1,
     },
@@ -23,18 +25,26 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     WebkitLineClamp: 2,
     overflowWrap: 'anywhere',
   }),
+  description: css({
+    margin: 0,
+  }),
   metadata: css({
-    display: 'flex',
-    flexWrap: 'wrap',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
     columnGap: theme.spacing(3),
     rowGap: theme.spacing(2),
     alignItems: 'start',
-    marginTop: theme.spacing(2),
+    margin: 0,
+    '& > div': {
+      minWidth: 0,
+    },
+    '@media (max-width: 360px)': {
+      gridTemplateColumns: '1fr',
+    },
   }),
   detail: css({
     display: 'flex',
     flexDirection: 'column',
-    flex: '1 1 140px',
     minWidth: 0,
     gap: theme.spacing(0.5),
     overflowWrap: 'anywhere',
@@ -48,7 +58,17 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.bodySmall.fontSize,
   }),
   tags: css({
-    marginTop: theme.spacing(2),
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    alignSelf: 'stretch',
+    minWidth: 0,
+  }),
+  tag: css({
+    minWidth: 0,
+    maxWidth: '100%',
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
   }),
   actions: css({
     display: 'flex',
