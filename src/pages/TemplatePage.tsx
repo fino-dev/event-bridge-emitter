@@ -1,16 +1,18 @@
 import { config, PluginPage } from '@grafana/runtime';
 import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { TemplateExecutor } from '../components/TemplateExecutor/TemplateExecutor';
-import { homePath } from '../constants';
+import { homePath, templateIdFromPath } from '../constants';
 import pluginJson from '../plugin.json';
 import { errorMessage, getTemplate } from '../templates/api';
 import { EventTemplate } from '../templates/types';
 import { getStyles } from './TemplatePage.styles';
 
 function TemplatePage() {
-  const { templateId = '' } = useParams<{ templateId: string }>();
+  const { pathname } = useLocation();
+  // Read the encoded segment directly: router params also decode a literal "%2F" into a slash.
+  const templateId = templateIdFromPath(pathname);
   return <TemplateDetails key={templateId} templateId={templateId} />;
 }
 

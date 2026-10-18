@@ -48,7 +48,7 @@ const manyFieldsTemplate: EventTemplate = {
 };
 const templates = [fullTemplate, fixedTemplate, manyFieldsTemplate];
 
-async function mockTemplates(page: Page) {
+async function mockTemplates(page: Page, provisionedTemplates = templates) {
   await page.addInitScript(() => {
     let copiedText = '';
     Object.defineProperty(navigator, 'clipboard', {
@@ -67,14 +67,14 @@ async function mockTemplates(page: Page) {
       await route.fulfill({ json: { status: 'unknown', message: 'Delivery status is unknown.' } });
       return;
     }
-    const id = url.pathname.split('/templates/')[1];
+    const id = url.searchParams.get('id') ?? url.pathname.split('/templates/')[1];
     if (id) {
-      const template = templates.find((item) => item.id === decodeURIComponent(id));
+      const template = provisionedTemplates.find((item) => item.id === id);
       await route.fulfill({ status: template ? 200 : 404, json: template ?? { message: 'Template not found' } });
       return;
     }
     const query = url.searchParams.get('q') ?? '';
-    await route.fulfill({ json: { templates: templates.filter((item) => item.name.includes(query)) } });
+    await route.fulfill({ json: { templates: provisionedTemplates.filter((item) => item.name.includes(query)) } });
   });
 }
 
@@ -206,6 +206,29 @@ test('direct links support missing, fixed-only and many-field templates', async 
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`${homePath}$`));
 });
+
+for (const id of ['team/job', 'team%2Fjob', 'team?job# space+日本語', 'execute']) {
+  test(`template links and execution preserve ID ${id}`, async ({ gotoPage, page }) => {
+    const template = { ...fixedTemplate, id, name: 'Special ID template' };
+    await mockTemplates(page, [template]);
+    await gotoPage('/home');
+    await page.getByRole('article', { name: template.name }).getByRole('button', { name: 'Use template' }).click();
+    const heading = page.getByRole('heading', { name: `Use ${template.name}`, exact: true });
+    await expect(heading).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe(templatePath(id));
+    await page.reload();
+    await expect(heading).toBeVisible();
+    const executionRequest = page.waitForRequest((request) => {
+      const url = new URL(request.url());
+      return (
+        request.method() === 'POST' && url.pathname.endsWith('/templates/execute') && url.searchParams.get('id') === id
+      );
+    });
+    await page.getByRole('button', { name: 'Send event', exact: true }).click();
+    await executionRequest;
+    await expect(page.getByText('Delivery status unknown', { exact: true })).toBeVisible();
+  });
+}
 
 test('copying reports clipboard failure and can be retried', async ({ gotoPage, page }) => {
   await mockTemplates(page);
