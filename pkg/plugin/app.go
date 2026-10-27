@@ -4,6 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
@@ -19,15 +23,44 @@ var (
 	_ backend.CheckHealthHandler    = (*App)(nil)
 )
 
-// App is an example app plugin with a backend which can respond to data queries.
-type App struct {
-	backend.CallResourceHandler
+// identityAPI is the AWS STS surface this plugin uses to prove credentials work.
+type identityAPI interface {
+	GetCallerIdentity(
+		ctx context.Context,
+		params *sts.GetCallerIdentityInput,
+		optFns ...func(*sts.Options),
+	) (*sts.GetCallerIdentityOutput, error)
 }
 
-// NewApp creates a new example *App instance.
+type eventBridgeAPI interface {
+	PutEvents(
+		ctx context.Context,
+		params *eventbridge.PutEventsInput,
+		optFns ...func(*eventbridge.Options),
+	) (*eventbridge.PutEventsOutput, error)
+}
+
+// App is the EventBridge emitter backend.
+type App struct {
+	backend.CallResourceHandler
+	awsConfigs           awsauth.ConfigProvider
+	newIdentityClient    func(aws.Config) identityAPI
+	newEventBridgeClient func(aws.Config) eventBridgeAPI
+	templates            TemplateRepository
+}
+
+// NewApp creates a new *App instance.
 func NewApp(_ context.Context, _ backend.AppInstanceSettings) (instancemgmt.Instance, error) {
 	var app App
-
+	app.awsConfigs = awsauth.NewConfigProvider()
+	app.newIdentityClient = func(cfg aws.Config) identityAPI {
+		return sts.NewFromConfig(cfg)
+	}
+	app.newEventBridgeClient = func(cfg aws.Config) eventBridgeAPI {
+		return eventbridge.NewFromConfig(cfg, func(options *eventbridge.Options) {
+			options.Retryer = aws.NopRetryer{}
+		})
+	}
 	// Use a httpadapter (provided by the SDK) for resource calls. This allows us
 	// to use a *http.ServeMux for resource calls, so we can map multiple routes
 	// to CallResource without having to implement extra logic.
@@ -44,10 +77,18 @@ func (a *App) Dispose() {
 	// cleanup
 }
 
-// CheckHealth handles health checks sent from Grafana to the plugin.
-func (a *App) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+// CheckHealth confirms the saved AWS credentials by calling STS GetCallerIdentity.
+func (a *App) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	identity, err := a.callerIdentity(ctx, req.PluginContext.AppInstanceSettings)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
+
 	return &backend.CheckHealthResult{
 		Status:  backend.HealthStatusOk,
-		Message: "ok",
+		Message: identity.message(),
 	}, nil
 }
