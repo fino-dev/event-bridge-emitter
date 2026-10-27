@@ -192,7 +192,7 @@ jobs:
       - name: Docker logs
         if: ${{ always() && steps.run-tests.outcome == 'failure' }}
         run: |
-          docker logs toshilab-eventbridgeemitter-app >& grafana-server.log
+          docker logs fino-eventbridgeemitter-app >& grafana-server.log
 
       - name: Stop grafana docker
         run: docker compose down

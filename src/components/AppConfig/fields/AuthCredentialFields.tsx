@@ -30,12 +30,12 @@ export function AuthCredentialFields({
   if (authType === 'credentials') {
     return (
       <Field
+        noMargin
         label="Credentials Profile Name"
         description="Profile name in the Grafana server credentials file. Leave blank to use the default profile."
         htmlFor="config-profile"
       >
         <Input
-          width={60}
           id="config-profile"
           name="profile"
           data-testid={testIds.appConfig.profile}
@@ -50,9 +50,8 @@ export function AuthCredentialFields({
   if (authType === 'keys') {
     return (
       <>
-        <Field label="Access Key ID" htmlFor="config-access-key">
+        <Field noMargin label="Access Key ID" htmlFor="config-access-key">
           <SecretInput
-            width={60}
             id="config-access-key"
             name="accessKey"
             data-testid={testIds.appConfig.accessKey}
@@ -63,9 +62,8 @@ export function AuthCredentialFields({
             onReset={onResetAccessKey}
           />
         </Field>
-        <Field label="Secret Access Key" htmlFor="config-secret-key">
+        <Field noMargin label="Secret Access Key" htmlFor="config-secret-key">
           <SecretInput
-            width={60}
             id="config-secret-key"
             name="secretKey"
             data-testid={testIds.appConfig.secretKey}

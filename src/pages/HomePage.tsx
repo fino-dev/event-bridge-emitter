@@ -1,9 +1,10 @@
 import { config, PluginPage } from '@grafana/runtime';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import pluginJson from '../plugin.json';
 import { TemplateCatalog } from '../components/TemplateCatalog/TemplateCatalog';
-import { TemplateExecutor } from '../components/TemplateExecutor/TemplateExecutor';
+import { templatePath } from '../constants';
 import { testIds } from '../components/testIds';
 import { errorMessage, listTemplates } from '../templates/api';
 import { EventTemplate } from '../templates/types';
@@ -11,13 +12,13 @@ import { getStyles } from './HomePage.styles';
 
 function HomePage() {
   const styles = useStyles2(getStyles);
+  const navigate = useNavigate();
   const orgRole = config.bootData?.user?.orgRole;
   const canExecuteTemplates = orgRole === 'Editor' || orgRole === 'Admin';
   const [templates, setTemplates] = useState<EventTemplate[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
-  const [executing, setExecuting] = useState<EventTemplate>();
 
   const loadTemplates = useCallback(async (search: string) => {
     setLoading(true);
@@ -38,7 +39,7 @@ function HomePage() {
 
   return (
     <PluginPage>
-      <main className={styles.page} data-testid={testIds.homePage.container}>
+      <main className={styles.root} data-testid={testIds.homePage.container}>
         {error && (
           <Alert
             severity="error"
@@ -54,7 +55,7 @@ function HomePage() {
           </Alert>
         )}
 
-        {!executing && !error && (
+        {!error && (
           <TemplateCatalog
             templates={templates}
             query={query}
@@ -62,11 +63,9 @@ function HomePage() {
             canExecute={canExecuteTemplates}
             onQueryChange={setQuery}
             onSearch={() => void loadTemplates(query)}
-            onUseTemplate={setExecuting}
+            onUseTemplate={(template) => navigate(templatePath(template.id))}
           />
         )}
-
-        {executing && <TemplateExecutor template={executing} onCancel={() => setExecuting(undefined)} />}
       </main>
     </PluginPage>
   );

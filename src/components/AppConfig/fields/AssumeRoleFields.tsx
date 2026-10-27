@@ -13,12 +13,12 @@ export function AssumeRoleFields({ assumeRoleArn, externalId, onChange }: Assume
   return (
     <>
       <Field
+        noMargin
         label="Optional: Assume Role ARN"
         description="The selected credentials assume this IAM role, and the role receives the AWS permissions."
         htmlFor="config-assume-role-arn"
       >
         <Input
-          width={60}
           id="config-assume-role-arn"
           name="assumeRoleArn"
           data-testid={testIds.appConfig.assumeRoleArn}
@@ -28,12 +28,12 @@ export function AssumeRoleFields({ assumeRoleArn, externalId, onChange }: Assume
         />
       </Field>
       <Field
+        noMargin
         label="External ID"
         description="Optional. Required only when the role trust policy checks an external ID."
         htmlFor="config-external-id"
       >
         <Input
-          width={60}
           id="config-external-id"
           name="externalId"
           data-testid={testIds.appConfig.externalId}

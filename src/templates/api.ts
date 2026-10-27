@@ -19,7 +19,17 @@ async function request<T>(url: string, method: string, data?: unknown): Promise<
 export async function listTemplates(pluginId: string, query = ''): Promise<EventTemplate[]> {
   const suffix = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : '';
   const response = await request<{ templates: EventTemplate[] }>(`${templatesUrl(pluginId)}${suffix}`, 'GET');
-  return response.templates;
+  return response.templates.map(normalizeTemplate);
+}
+
+export async function getTemplate(pluginId: string, id: string): Promise<EventTemplate> {
+  return normalizeTemplate(
+    await request<EventTemplate>(`${templatesUrl(pluginId)}?id=${encodeURIComponent(id)}`, 'GET')
+  );
+}
+
+export function templateFields(template: EventTemplate) {
+  return template.event.fields ?? [];
 }
 
 export function executeTemplate(
@@ -28,7 +38,7 @@ export function executeTemplate(
   detailType: string,
   values: Record<string, unknown>
 ): Promise<ExecutionResponse> {
-  return request<ExecutionResponse>(`${templatesUrl(pluginId)}/${encodeURIComponent(id)}/execute`, 'POST', {
+  return request<ExecutionResponse>(`${templatesUrl(pluginId)}/execute?id=${encodeURIComponent(id)}`, 'POST', {
     detailType,
     values,
   });
@@ -80,11 +90,21 @@ function isExecutionStatus(value: unknown): value is ExecutionStatus {
 
 export function buildEventDetail(template: EventTemplate, values: Record<string, unknown>): Record<string, unknown> {
   const detail = { ...template.event.fixedDetail };
-  for (const field of template.event.fields) {
+  for (const field of templateFields(template)) {
     const value = values[field.key] ?? field.default;
     if (value !== undefined) {
       detail[field.key] = value;
     }
   }
   return detail;
+}
+
+function normalizeTemplate(template: EventTemplate): EventTemplate {
+  return {
+    ...template,
+    event: {
+      ...template.event,
+      fields: templateFields(template),
+    },
+  };
 }

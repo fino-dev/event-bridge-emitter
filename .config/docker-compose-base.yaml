@@ -1,7 +1,7 @@
 services:
   grafana:
     user: root
-    container_name: 'toshilab-eventbridgeemitter-app'
+    container_name: 'fino-eventbridgeemitter-app'
 
     build:
       context: .
@@ -19,13 +19,13 @@ services:
     cap_add:
       - SYS_PTRACE
     volumes:
-      - ../dist:/var/lib/grafana/plugins/toshilab-eventbridgeemitter-app
+      - ../dist:/var/lib/grafana/plugins/fino-eventbridgeemitter-app
       - ../provisioning:/etc/grafana/provisioning
-      - ..:/root/toshilab-eventbridgeemitter-app
+      - ..:/root/fino-eventbridgeemitter-app
 
     environment:
       NODE_ENV: development
-      GF_LOG_FILTERS: plugin.toshilab-eventbridgeemitter-app:debug
+      GF_LOG_FILTERS: plugin.fino-eventbridgeemitter-app:debug
       GF_LOG_LEVEL: debug
       GF_DATAPROXY_LOGGING: 1
-      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: toshilab-eventbridgeemitter-app
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: fino-eventbridgeemitter-app

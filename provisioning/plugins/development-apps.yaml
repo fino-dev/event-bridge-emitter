@@ -1,7 +1,7 @@
 apiVersion: 1
 
 apps:
-  - type: 'toshilab-eventbridgeemitter-app'
+  - type: 'fino-eventbridgeemitter-app'
     org_id: 1
     org_name: 'toshi-lab'
     disabled: false
@@ -9,25 +9,75 @@ apps:
       authType: default
       defaultRegion: ap-northeast-1
       templates:
-        - id: ingest-yahoo-history
-          name: Ingest Yahoo history
-          description: Start Yahoo Finance history ingestion for the selected tickers.
+        - id: test-event
+          name: Test Event
+          description: Test Event
           tags:
-            - pipeline
-            - yahoo
-            - history
+            - test
           target:
             region: ap-northeast-1
-            eventBusName: toshi-lab-dev-pipeline-bus
+            eventBusName: fino-eventbridgeemitter-app-dev-bus
           event:
-            source: toshi-lab.pipeline
-            detailType: YahooHistoryIngest
+            source: fino.eventbridgeemitter.app
+            detailType: TestEvent
             fixedDetail: {}
             fields:
-              - key: tickers
-                label: Tickers
+              - key: message
+                label: Message
+                type: string
+                required: true
+                default: Hello, world!
+        - id: test-event-2
+          name: Test Event 2
+          description: Test Event 2
+          tags:
+            - test
+          target:
+            region: ap-northeast-1
+            eventBusName: fino-eventbridgeemitter-app-dev-bus
+          event:
+            source: fino.eventbridgeemitter.app
+            detailType: TestEvent2
+            fixedDetail: {}
+            fields:
+              - key: message
+                label: Message
+                type: string
+                required: true
+                default: Hello, world!
+              - key: message2
+                label: Message 2
                 type: json
                 required: true
-                default:
-                  - AAPL
-                  - GOOG
+                default: { "message": "Hello, world!" }
+              - key: message3
+                label: Message 3  
+                type: number
+                required: true
+                default: 123
+              - key: message4
+                label: Message 4
+                type: boolean
+                required: true
+                default: true
+              - key: message5
+                label: Message 5
+                type: select
+                options:
+                  - option1
+                  - option2
+                  - option3
+                required: true
+                default: option1
+        - id: test-event-3
+          name: Test Event 3
+          description: Test Event 3
+          tags:
+            - test
+          target:
+            region: ap-northeast-1
+            eventBusName: fino-eventbridgeemitter-app-dev-bus
+          event:
+            source: fino.eventbridgeemitter.app
+            detailType: TestEvent3
+            fixedDetail: {}

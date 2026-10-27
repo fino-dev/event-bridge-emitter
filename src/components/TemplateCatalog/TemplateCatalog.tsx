@@ -26,15 +26,13 @@ export function TemplateCatalog({
   const styles = useStyles2(getStyles);
 
   return (
-    <section className={styles.section} aria-labelledby="templates-heading">
-      <div className={styles.sectionHeader}>
-        <div className={styles.sectionIntro}>
-          <h2 id="templates-heading" className={styles.sectionTitle}>
+    <section className={styles.root} aria-labelledby="templates-heading">
+      <div className={styles.header}>
+        <div className={styles.intro}>
+          <h2 id="templates-heading" className={styles.title}>
             Available templates
           </h2>
-          <p className={styles.sectionDescription}>
-            Templates are managed by Grafana provisioning and are read-only here.
-          </p>
+          <p className={styles.description}>Templates are managed by Grafana provisioning and are read-only here.</p>
         </div>
         {!loading && templates.length > 0 && (
           <span className={styles.resultCount}>
@@ -58,7 +56,7 @@ export function TemplateCatalog({
             }}
           />
         </div>
-        <Button className={styles.searchBarButton} icon="search" onClick={onSearch}>
+        <Button className={styles.searchButton} icon="search" onClick={onSearch}>
           Search
         </Button>
       </div>
@@ -81,7 +79,7 @@ export function TemplateCatalog({
           </EmptyState>
         </div>
       ) : (
-        <div className={styles.templateList}>
+        <div className={styles.list}>
           {templates.map((template) => (
             <TemplateCard key={template.id} template={template} canExecute={canExecute} onUse={onUseTemplate} />
           ))}
