@@ -1,14 +1,24 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import '@testing-library/jest-dom/vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import AppConfig, { AppConfigProps } from './AppConfig';
 import { testIds } from 'components/testIds';
 
 describe('Components/AppConfig', () => {
   let props: AppConfigProps;
+  const originalProviders = config.awsAllowedAuthProviders;
+  const originalAssumeRole = config.awsAssumeRoleEnabled;
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
+      return { measureText: () => ({ width: 0 }) } as unknown as CanvasRenderingContext2D;
+    });
+    config.awsAllowedAuthProviders = ['default', 'keys', 'credentials'];
+    config.awsAssumeRoleEnabled = true;
 
     props = {
       plugin: {
@@ -17,22 +27,26 @@ describe('Components/AppConfig', () => {
           name: 'Sample App',
           type: PluginType.app,
           enabled: true,
-          jsonData: {},
+          jsonData: { authType: 'default', defaultRegion: 'ap-northeast-1' },
         },
       },
       query: {},
     } as unknown as AppConfigProps;
   });
 
-  test('renders the "API Settings" fieldset with API key, API url inputs and button', () => {
-    const plugin = { meta: { ...props.plugin.meta, enabled: false } };
+  afterEach(() => {
+    vi.restoreAllMocks();
+    config.awsAllowedAuthProviders = originalProviders;
+    config.awsAssumeRoleEnabled = originalAssumeRole;
+  });
 
-    // @ts-ignore - We don't need to provide `addConfigPage()` and `setChannelSupport()` for these tests
-    render(<AppConfig plugin={plugin} query={props.query} />);
+  test('renders AWS authentication fields', () => {
+    render(<AppConfig plugin={props.plugin} query={props.query} />);
 
-    expect(screen.queryByRole('group', { name: /api settings/i })).toBeInTheDocument();
-    expect(screen.queryByTestId(testIds.appConfig.apiKey)).toBeInTheDocument();
-    expect(screen.queryByTestId(testIds.appConfig.apiUrl)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /save api settings/i })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /aws authentication/i })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/authentication provider/i)).toBeInTheDocument();
+    expect(screen.queryByTestId(testIds.appConfig.defaultRegion)).toHaveValue('ap-northeast-1');
+    expect(screen.queryByTestId(testIds.appConfig.assumeRoleArn)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /save and test/i })).toBeInTheDocument();
   });
 });
