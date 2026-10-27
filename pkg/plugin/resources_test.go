@@ -1,11 +1,11 @@
 package plugin
 
 import (
-	"bytes"
 	"context"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"net/http"
 	"testing"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // mockCallResourceResponseSender implements backend.CallResourceResponseSender
@@ -20,10 +20,8 @@ func (s *mockCallResourceResponseSender) Send(response *backend.CallResourceResp
 	return nil
 }
 
-// TestCallResource tests CallResource calls, using backend.CallResourceRequest and backend.CallResourceResponse.
-// This ensures the httpadapter for CallResource works correctly.
-func TestCallResource(t *testing.T) {
-	// Initialize app
+// TestCallResourceDoesNotExposeTemplateEndpoints guards against generated sample routes.
+func TestCallResourceDoesNotExposeTemplateEndpoints(t *testing.T) {
 	inst, err := NewApp(context.Background(), backend.AppInstanceSettings{})
 	if err != nil {
 		t.Fatalf("new app: %s", err)
@@ -36,65 +34,21 @@ func TestCallResource(t *testing.T) {
 		t.Fatal("inst must be of type *App")
 	}
 
-	// Set up and run test cases
-	for _, tc := range []struct {
-		name string
-
-		method string
-		path   string
-		body   []byte
-
-		expStatus int
-		expBody   []byte
-	}{
-		{
-			name:      "get ping 200",
-			method:    http.MethodGet,
-			path:      "ping",
-			expStatus: http.StatusOK,
-		},
-		{
-			name:      "get echo 405",
-			method:    http.MethodGet,
-			path:      "echo",
-			expStatus: http.StatusMethodNotAllowed,
-		},
-		{
-			name:      "post echo 200",
-			method:    http.MethodPost,
-			path:      "echo",
-			body:      []byte(`{"message":"ok"}`),
-			expStatus: http.StatusOK,
-			expBody:   []byte(`{"message":"ok"}`),
-		},
-		{
-			name:      "get non existing handler 404",
-			method:    http.MethodGet,
-			path:      "not_found",
-			expStatus: http.StatusNotFound,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			// Request by calling CallResource. This tests the httpadapter.
-			var r mockCallResourceResponseSender
-			err = app.CallResource(context.Background(), &backend.CallResourceRequest{
-				Method: tc.method,
-				Path:   tc.path,
-				Body:   tc.body,
-			}, &r)
+	for _, path := range []string{"ping", "echo"} {
+		t.Run(path, func(t *testing.T) {
+			var response mockCallResourceResponseSender
+			err := app.CallResource(context.Background(), &backend.CallResourceRequest{
+				Method: http.MethodGet,
+				Path:   path,
+			}, &response)
 			if err != nil {
 				t.Fatalf("CallResource error: %s", err)
 			}
-			if r.response == nil {
+			if response.response == nil {
 				t.Fatal("no response received from CallResource")
 			}
-			if tc.expStatus > 0 && tc.expStatus != r.response.Status {
-				t.Errorf("response status should be %d, got %d", tc.expStatus, r.response.Status)
-			}
-			if len(tc.expBody) > 0 {
-				if tb := bytes.TrimSpace(r.response.Body); !bytes.Equal(tb, tc.expBody) {
-					t.Errorf("response body should be %s, got %s", tc.expBody, tb)
-				}
+			if response.response.Status != http.StatusNotFound {
+				t.Errorf("status = %d, want %d", response.response.Status, http.StatusNotFound)
 			}
 		})
 	}
