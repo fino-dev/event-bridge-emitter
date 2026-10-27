@@ -22,6 +22,12 @@ export async function listTemplates(pluginId: string, query = ''): Promise<Event
   return response.templates.map(normalizeTemplate);
 }
 
+export async function getTemplate(pluginId: string, id: string): Promise<EventTemplate> {
+  return normalizeTemplate(
+    await request<EventTemplate>(`${templatesUrl(pluginId)}?id=${encodeURIComponent(id)}`, 'GET')
+  );
+}
+
 export function templateFields(template: EventTemplate) {
   return template.event.fields ?? [];
 }
@@ -32,7 +38,7 @@ export function executeTemplate(
   detailType: string,
   values: Record<string, unknown>
 ): Promise<ExecutionResponse> {
-  return request<ExecutionResponse>(`${templatesUrl(pluginId)}/${encodeURIComponent(id)}/execute`, 'POST', {
+  return request<ExecutionResponse>(`${templatesUrl(pluginId)}/execute?id=${encodeURIComponent(id)}`, 'POST', {
     detailType,
     values,
   });
