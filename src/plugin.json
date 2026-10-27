@@ -1,15 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "app",
-  "name": "AWS Event Bridge Emitter",
-  "id": "toshilab-eventbridgeemitter-app",
+  "name": "AWS EventBridge Emitter",
+  "id": "fino-eventbridgeemitter-app",
   "backend": true,
   "executable": "gpx_event_bridge_emitter",
   "info": {
     "keywords": ["app"],
-    "description": "Configure and verify AWS authentication for EventBridge integration.",
+    "description": "Send provisioned Amazon EventBridge events through Grafana.",
     "author": {
-      "name": "Toshi Lab"
+      "name": "Fino"
     },
     "logos": {
       "small": "img/logo.svg",

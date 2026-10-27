@@ -25,4 +25,6 @@ func (a *App) handleIdentity(w http.ResponseWriter, req *http.Request) {
 
 func (a *App) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/aws/identity", a.handleIdentity)
+	mux.HandleFunc("/templates", a.handleTemplateCollection)
+	mux.HandleFunc("/templates/", a.handleTemplateResource)
 }

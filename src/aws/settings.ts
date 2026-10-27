@@ -1,12 +1,15 @@
-export type AwsAuthType = 'default' | 'credentials' | 'keys' | 'ec2_iam_role';
+import { EventTemplate } from '../templates/types';
+
+export type AwsAuthType = 'default' | 'credentials' | 'keys';
 
 export interface AwsAuthJsonData {
   authType?: AwsAuthType;
   profile?: string;
   defaultRegion?: string;
+  templates?: EventTemplate[];
   assumeRoleArn?: string;
   externalId?: string;
-  [key: string]: string | undefined;
+  [key: string]: unknown;
 }
 
 export interface AwsIdentity {
@@ -22,11 +25,6 @@ interface AwsAuthProviderOption {
 }
 
 const awsAuthProviders: AwsAuthProviderOption[] = [
-  {
-    value: 'ec2_iam_role',
-    label: 'Workspace IAM Role',
-    description: 'Use the IAM role attached to the machine running Grafana.',
-  },
   {
     value: 'default',
     label: 'AWS SDK Default',
@@ -62,6 +60,7 @@ interface AwsAuthFormState {
   defaultRegion: string;
   assumeRoleArn: string;
   externalId: string;
+  templates?: EventTemplate[];
   accessKey: string;
   secretKey: string;
   isAccessKeySet: boolean;
@@ -79,6 +78,9 @@ export function buildAwsSettingsUpdate(state: AwsAuthFormState): {
     assumeRoleArn: state.assumeRoleEnabled ? state.assumeRoleArn.trim() : '',
     externalId: state.assumeRoleEnabled ? state.externalId.trim() : '',
   };
+  if (state.templates) {
+    jsonData.templates = state.templates;
+  }
   if (state.authType === 'credentials') {
     jsonData.profile = state.profile.trim();
   }

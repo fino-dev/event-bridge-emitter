@@ -16,7 +16,7 @@ export function AuthenticationProviderField({
 }: AuthenticationProviderFieldProps) {
   if (providers.length === 0 || !selectedProvider) {
     return (
-      <Alert severity="warning" title="No supported authentication provider">
+      <Alert severity="warning" title="No supported authentication provider" bottomSpacing={0}>
         This Grafana server only allows Grafana Assume Role. This plugin cannot use that provider. Enable AWS SDK
         Default, Credentials file, or Access & secret key in the server AWS settings.
       </Alert>
@@ -24,14 +24,13 @@ export function AuthenticationProviderField({
   }
 
   return (
-    <Field label="Authentication Provider" description={selectedProvider.description} htmlFor="config-auth-type">
-      <Combobox
-        id="config-auth-type"
-        width={60}
-        options={providers}
-        value={selectedProvider}
-        onChange={onAuthTypeChange}
-      />
+    <Field
+      noMargin
+      label="Authentication Provider"
+      description={selectedProvider.description}
+      htmlFor="config-auth-type"
+    >
+      <Combobox id="config-auth-type" options={providers} value={selectedProvider} onChange={onAuthTypeChange} />
     </Field>
   );
 }

@@ -93,6 +93,7 @@ export function useAwsAuthSettings(meta: AppPluginMeta<AwsAuthJsonData>) {
     const update = buildAwsSettingsUpdate({
       ...state,
       assumeRoleEnabled,
+      templates: jsonData?.templates,
     });
 
     try {

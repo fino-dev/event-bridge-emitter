@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	if err := app.Manage("toshilab-eventbridgeemitter-app", plugin.NewApp, app.ManageOpts{}); err != nil {
+	if err := app.Manage("fino-eventbridgeemitter-app", plugin.NewApp, app.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}

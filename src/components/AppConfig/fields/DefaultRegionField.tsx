@@ -5,20 +5,18 @@ import { AuthFieldChangeHandler } from '../useAwsAuthSettings';
 
 interface DefaultRegionFieldProps {
   value: string;
-  className?: string;
   onChange: AuthFieldChangeHandler;
 }
 
-export function DefaultRegionField({ value, className, onChange }: DefaultRegionFieldProps) {
+export function DefaultRegionField({ value, onChange }: DefaultRegionFieldProps) {
   return (
     <Field
+      noMargin
       label="Default Region"
       description="Region used for AWS requests. A credentials profile can supply this when the field is empty."
       htmlFor="config-default-region"
-      className={className}
     >
       <Input
-        width={60}
         id="config-default-region"
         name="defaultRegion"
         data-testid={testIds.appConfig.defaultRegion}
